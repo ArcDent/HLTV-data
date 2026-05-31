@@ -34,11 +34,11 @@
 ```
 
 ## 最近操作
+- 2026-05-31：README.md 全面重写 — 参考 MaiCLI 风格，ASCII Logo + 徽章 + emoji 章节；按 8 章节结构重组（简介/结构/部署前/功能/MCP工具/快速部署/注册/手动构建/致谢）
 - 2026-05-31：代码瘦身收敛 — 删除冗余文件（stale 二进制、历史 docs、未引用图标）；收敛导出符号（facade/mcp/normalizer/localization 各包）；消除空 Renderer struct → 包级函数；合并 team/player 搜索重复逻辑为 searchHLTV；修复 Store.Close() 资源泄漏；删除 dead getTeamOverride/getPlayerOverride 函数
 - 2026-05-31：修复 API Key 保存失效 — `TranslateConfig` 缺少 JSON 标签导致 `provider_url`/`api_key` 解码为空；修复 `loadTranslateConfig` 自动升级路径覆盖明文密钥的缺陷
 - 2026-05-31：新闻翻译长效化存储全部完成 — 9 Task（translator 包 + migration v2 + types + storage + handlers + facade + main wiring），8 次 commit，全量测试通过，schema v2 验证通过
 - 2026-05-30：前端 SSE 集成 — `useSSE` hook（模块级单例 EventSource）+ 4 页面自动刷新（Matches/TeamDetail/PlayerDetail/News）；构建验证通过
-- 2026-05-30：长期化存储全部实现完成 — 7 Group（16 任务）编译通过 + 12 测试套件通过 + 端到端验证（health/SSE/SQLite）；6 次 commit
 
 ## 关键发现
 

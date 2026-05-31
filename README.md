@@ -1,56 +1,196 @@
-# HLTV MCP Service
+<!-- markdownlint-disable -->
 
-Go 单二进制全栈 HLTV MCP 服务 — MCP stdio + HTTP REST + React 管理面板。
+<p align="center">
+  <pre>
+  ██╗  ██╗██╗  ████████╗██╗   ██╗       ██████╗  █████╗ ████████╗ █████╗ 
+  ██║  ██║██║  ╚══██╔══╝██║   ██║       ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗
+  ███████║██║     ██║   ██║   ██║       ██║  ██║███████║   ██║   ███████║
+  ██╔══██║██║     ██║   ╚██╗ ██╔╝       ██║  ██║██╔══██║   ██║   ██╔══██║
+  ██║  ██║███████╗██║    ╚████╔╝        ██████╔╝██║  ██║   ██║   ██║  ██║
+  ╚═╝  ╚═╝╚══════╝╚═╝     ╚═══╝         ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
+          HLTV MCP Service — CS:GO / CS2 Data Gateway
+  </pre>
+</p>
 
-> 灵感来源：[hltv-api](https://github.com/M3MONs/hltv-api)（Python Flask/Scrapy HLTV 爬虫 API），使用 Go 完全重建，去除 Python 上游依赖。
+<div align="center">
+
+![Go](https://img.shields.io/badge/Go-1.26-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-GHCR-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Windows%20|%20Linux%20|%20macOS-blue?style=for-the-badge)
+
+**✨ Go 单二进制全栈 HLTV MCP 服务 ✨**
+
+MCP stdio + HTTP REST + React 管理面板，让 CS:GO / CS2 赛事数据触手可及
+
+[功能特性](#-功能特性) • [快速部署](#-快速部署) • [MCP 工具](#-mcp-工具) • [手动构建](#-手动构建) • [致谢](#-致谢)
+
+</div>
+
+---
+
+## 项目简介
+
+HLTV-data 是一个 Go 单二进制全栈 HLTV MCP 服务，将 HLTV.org 的赛事数据封装为 9 个 MCP 工具，并提供 REST API 和 React Web 管理面板。
+
+> [!NOTE]
+> **灵感来源**：[hltv-api](https://github.com/M3MONs/hltv-api)（Python Flask/Scrapy HLTV 爬虫 API）和 TypeScript MCP 服务。本项目使用 Go 完全重建，统一为单一二进制，去除外部 Python 依赖，增加 Web 管理面板。
+
+### 为什么选择 HLTV-data？
+
+单二进制部署，零运行时依赖。Docker 一鍵启动，3 秒即可在浏览器访问管理面板。
+
+---
+
+## 项目结构
+
+```
+hltv-mcp-fully-rebuild/
+├── main.go                        # MCP stdio + HTTP 双 goroutine 入口
+├── Dockerfile                     # 三阶段构建（前端 → Go → 运行时）
+├── docker-compose.yml             # Compose 快速启动
+├── internal/
+│   ├── types/              # 共享类型定义
+│   ├── config/             # 环境变量配置
+│   ├── crypto/             # AES-256-GCM 加解密（API Key 持久化）
+│   ├── cache/              # 内存缓存（TTL + stale + 并发合并）
+│   ├── client/             # HTTP 客户端 + Firecrawl CF 绕过
+│   ├── scraper/            # 7 个 HLTV 爬虫模块 + 公共搜索解析
+│   ├── localization/       # 中英文名称映射（26 队伍 + 98 选手）
+│   ├── normalizer/         # HTML → 标准化数据结构
+│   ├── facade/             # 核心编排层
+│   ├── summary/            # 中文摘要生成
+│   ├── renderer/           # 中文格式化输出
+│   ├── mcp/                # 9 MCP 工具注册 + stdio 传输
+│   ├── http/               # chi router + REST API + SPA fallback
+│   ├── storage/            # SQLite 持久化（migration + Store + CRUD）
+│   └── translator/         # LLM 翻译（OpenAI 兼容 API）
+└── frontend/               # React 18 + Vite + Tailwind CSS
+    └── src/pages/          # 5 个管理面板页面
+```
+
+---
+
+## 部署之前需要注意
+
+### 前置环境
+
+| 依赖 | 版本 | 说明 |
+|:-----|:-----|:-----|
+| **Docker** | ≥ 20.10 | 推荐部署方式 |
+| **Go** | ≥ 1.26 | 仅手动编译需要 |
+| **Node.js** | ≥ 18 | 仅手动编译前端需要 |
+
+### 翻译 LLM API（可选）
+
+内置新闻标题自动翻译功能，支持 OpenAI 兼容 API。在 Web 管理面板 `http://localhost:8082` → **设置** 页面配置：
+
+| 配置项 | 说明 |
+|:-------|:-----|
+| Provider URL | LLM API 地址（如 `https://api.openai.com/v1`） |
+| API Key | API 密钥 |
+| Model | 模型名称（如 `gpt-4o-mini`） |
+
+支持 OpenAI、DeepSeek、Groq、Ollama 等所有 OpenAI 兼容接口。
+
+### Firecrawl API Key（推荐）
+
+HLTV `/matches` 页面使用 Cloudflare 防护，需配置 Firecrawl API Key 绕过：
+
+1. 注册 [Firecrawl](https://firecrawl.dev) 账号
+2. 获取 API Key（格式：`fc-xxxxxxxxxxxxxxxx`）
+3. 通过环境变量 `FIRECRAWL_API_KEY` 传入
+
+> [!WARNING]
+> 不配置 Firecrawl Key 不影响队伍/选手搜索、新闻查询等功能，仅赛程（`/matches`）不可用。
+
+---
 
 ## 功能特性
 
-- **9 个 MCP 工具**：队伍/选手解析、赛程/赛果查询、实时/归档新闻
-- **Web 管理面板**：React SPA，5 个页面（Dashboard / Matches / Search / News / Cache）
-- **反爬虫**：HTTP 直连 + Firecrawl API 绕过 Cloudflare 封锁赛程页面
-- **中文输出**：26 支队伍民间昵称映射 + 98 名选手中文简称 + 中文摘要生成
-- **翻译**：接入 OpenAI / DeepSeek / Groq / Ollama 等兼容 API，新闻标题自动翻译 + 正文一键翻译
-- **Docker 一键部署**：三阶段构建，含 chrome-headless-shell，GitHub Actions 自动推送 GHCR
+### 核心功能
 
-## 快速开始（Docker + GHCR 远端镜像）
+| 功能 | 描述 |
+|:-----|:-----|
+| **9 个 MCP 工具** | 队伍/选手解析、赛程/赛果查询、实时/归档新闻 |
+| **REST API** | 健康检查、搜索、赛程、新闻端点 |
+| **Web 管理面板** | React SPA，Dashboard / Matches / Search / News / Cache 五个页面 |
+| **SSE 实时推送** | 后端抓取完成后自动推送前端刷新 |
+| **反爬虫** | HTTP 直连 + Firecrawl API 绕过 Cloudflare 封锁 |
+| **中文输出** | 26 支队伍民间昵称 + 98 名选手中文简称 + 中文摘要 |
 
-### Windows（PowerShell）
+### 数据能力
 
-```powershell
-docker run -d --name hltv-mcp `
-  -p 8082:8082 `
-  -e FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx `
-  -v hltv-chrome-data:/tmp `
-  -v hltv-data:/data `
-  ghcr.io/arcdent/hltv-data:latest
+| 特性 | 描述 |
+|:-----|:-----|
+| **三层回退** | 内存缓存 → SQLite 历史 → HLTV 实时抓取 |
+| **自动过期** | 比赛 90 天 / 新闻 30 天 / 实时新闻 7 天自动清理 |
+| **新闻翻译** | 接入 LLM API，标题自动翻译 + 正文一键翻译 |
+| **别名编辑** | Web 面板支持队伍/选手别名在线编辑 |
+
+---
+
+## MCP 工具
+
+| 工具名 | 作用 | 主要参数 |
+|:-------|:-----|:---------|
+| `resolve_team` | 解析队伍名称为 HLTV 身份候选 | `name`(必填), `exact`, `limit` |
+| `resolve_player` | 解析选手名称为 HLTV 身份候选 | `name`(必填), `exact`, `limit` |
+| `hltv_team_recent` | 查询队伍近况、近期战绩和即将到来的比赛 | `team_id`, `team_name`, `limit` |
+| `hltv_player_recent` | 查询选手近况和统计数据 | `player_id`, `player_name`, `limit` |
+| `hltv_results_recent` | 查询近期赛果（支持队伍/赛事筛选） | `team`, `event`, `limit`(1-20), `days`(1-30) |
+| `hltv_matches_upcoming` | 查询即将到来的比赛 | `team_id`, `team`, `event`, `limit`(1-20), `days`(1-30) |
+| `hltv_matches_today` | 查询今日全部赛程（亚洲时区） | 无参数 |
+| `hltv_realtime_news` | 获取 HLTV 实时/最新新闻 | `limit`(1-50), `page`, `offset` |
+| `hltv_news_digest` | 获取 HLTV 月度归档新闻 | `limit`, `tag`, `year`, `month`, `page` |
+
+### WebUI 管理页面
+
+启动后访问 `http://localhost:8082`：
+
+| 页面 | 路由 | 功能 |
+|:-----|:-----|:-----|
+| **Dashboard** | `/` | 服务状态概览 |
+| **Matches** | `/matches` | 赛程浏览，SSE 实时刷新 |
+| **Search** | `/search` | 队伍/选手搜索 |
+| **News** | `/news` | 新闻列表，SSE 实时刷新 |
+| **Cache** | `/cache` | 缓存使用情况 |
+
+---
+
+## 快速部署
+
+### Docker Compose（推荐）
+
+```bash
+# 克隆仓库
+git clone https://github.com/ArcDent/HLTV-data.git
+cd HLTV-data
+
+# 启动（从 GHCR 拉取预构建镜像）
+FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx docker compose up -d
 ```
 
 浏览器访问 `http://localhost:8082`。
 
-> `FIRECRAWL_API_KEY` 用于绕过 Cloudflare 抓取赛程（/matches），不配置不影响搜索/队伍/选手功能。
-
-### Linux / macOS / WSL
+### Docker 直接启动
 
 ```bash
+# Windows（PowerShell）
+docker run -d --name hltv-mcp `
+  -p 8082:8082 `
+  -e FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx `
+  -v hltv-data:/data `
+  ghcr.io/arcdent/hltv-data:latest
+
+# Linux / macOS / WSL
 docker run -d --name hltv-mcp \
   -p 8082:8082 \
   -e FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx \
-  -v hltv-chrome-data:/tmp \
   -v hltv-data:/data \
   ghcr.io/arcdent/hltv-data:latest
-```
-
-### 端口与进程管理
-
-默认端口 `8082`（通过 `HTTP_PORT` 环境变量可修改）。
-
-```bash
-# 按端口杀进程
-kill $(lsof -t -i:8082) 2>/dev/null || fuser -k 8082/tcp
-
-# 按进程名杀
-pkill -f hltv-mcp
 ```
 
 ### 更新镜像
@@ -63,22 +203,21 @@ docker pull ghcr.io/arcdent/hltv-data:latest
 docker rm -f hltv-mcp \
   && docker run -d --name hltv-mcp \
     -p 8082:8082 \
-    -v hltv-chrome-data:/tmp \
     -v hltv-data:/data \
     ghcr.io/arcdent/hltv-data:latest
 
 # 一行更新
-docker pull ghcr.io/arcdent/hltv-data:latest && docker rm -f hltv-mcp && docker run -d --name hltv-mcp -p 8082:8082 -v hltv-chrome-data:/tmp -v hltv-data:/data ghcr.io/arcdent/hltv-data:latest
+docker pull ghcr.io/arcdent/hltv-data:latest && docker rm -f hltv-mcp && docker run -d --name hltv-mcp -p 8082:8082 -v hltv-data:/data ghcr.io/arcdent/hltv-data:latest
 ```
 
 ### 自动同步
 
-每次 push 到 main 分支，GitHub Actions 自动构建镜像推送到 GHCR。搭配系统计划任务实现自动更新：
+每次 push 到 main 分支，GitHub Actions 自动构建镜像推送至 GHCR。搭配系统计划任务实现自动更新：
 
 **Windows（PowerShell 计划任务，以管理员运行）**
 
 ```powershell
-$action = New-ScheduledTaskAction -Execute "docker" -Argument "run --rm -d --name hltv-mcp -p 8082:8082 -v hltv-chrome-data:/tmp ghcr.io/arcdent/hltv-data:latest"
+$action = New-ScheduledTaskAction -Execute "docker" -Argument "run --rm -d --name hltv-mcp -p 8082:8082 -v hltv-data:/data ghcr.io/arcdent/hltv-data:latest"
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5) -RepetitionDuration (New-TimeSpan -Days 3650)
 Register-ScheduledTask -TaskName "HLTV-Auto-Update" -Action $action -Trigger $trigger -RunLevel Highest
 ```
@@ -86,40 +225,18 @@ Register-ScheduledTask -TaskName "HLTV-Auto-Update" -Action $action -Trigger $tr
 **Linux（crontab）**
 
 ```bash
-*/5 * * * * docker pull ghcr.io/arcdent/hltv-data:latest && docker rm -f hltv-mcp && docker run -d --name hltv-mcp -p 8082:8082 -v hltv-chrome-data:/tmp -v hltv-data:/data ghcr.io/arcdent/hltv-data:latest
+*/5 * * * * docker pull ghcr.io/arcdent/hltv-data:latest && docker rm -f hltv-mcp && docker run -d --name hltv-mcp -p 8082:8082 -v hltv-data:/data ghcr.io/arcdent/hltv-data:latest
 ```
 
-## 用法
+---
 
-### REST API
+## 作为 MCP 注册在 Agent 中
 
-```bash
-curl http://localhost:8082/api/health              # {"status":"ok"}
-curl http://localhost:8082/api/status              # 服务状态
-curl http://localhost:8082/api/matches/today       # 今日赛程
-curl http://localhost:8082/api/search?q=Vitality&type=team
-curl http://localhost:8082/api/news/realtime?limit=10
-```
+### 标准 MCP 客户端
 
-### MCP 工具列表
+Docker 部署后 MCP stdio 不可用（容器隔离）。如需 MCP 功能，使用手动编译启动。
 
-| 工具名 | 作用 | 主要参数 |
-|--------|------|---------|
-| `resolve_team` | 解析队伍名称为 HLTV 身份候选 | `name`(必填), `exact`, `limit` |
-| `resolve_player` | 解析选手名称为 HLTV 身份候选 | `name`(必填), `exact`, `limit` |
-| `hltv_team_recent` | 查询队伍近况、近期战绩和即将到来的比赛 | `team_id`, `team_name`, `limit` |
-| `hltv_player_recent` | 查询选手近况和统计数据 | `player_id`, `player_name`, `limit` |
-| `hltv_results_recent` | 查询近期赛果（支持队伍/赛事筛选） | `team`, `event`, `limit`(1-20), `days`(1-30) |
-| `hltv_matches_upcoming` | 查询即将到来的比赛 | `team_id`, `team`, `event`, `limit`(1-20), `days`(1-30) |
-| `hltv_matches_today` | 查询今日全部赛程（亚洲时区） | 无参数 |
-| `hltv_realtime_news` | 获取 HLTV 实时/最新新闻 | `limit`(1-50), `page`, `offset` |
-| `hltv_news_digest` | 获取 HLTV 月度归档新闻 | `limit`, `tag`, `year`, `month`, `page` |
-
-### MCP 注册
-
-Docker 部署后 MCP stdio 不可用（容器隔离）。如需 MCP 功能，使用手动编译启动（见下方）。
-
-**标准 MCP 客户端**（Claude Desktop、VS Code Copilot、Gemini CLI 等）：
+**Claude Desktop / VS Code Copilot / Gemini CLI**：
 
 ```jsonc
 {
@@ -132,10 +249,30 @@ Docker 部署后 MCP stdio 不可用（容器隔离）。如需 MCP 功能，使
 }
 ```
 
+### OpenCode 特殊情况
+
+OpenCode 的 MCP 注册方式有所不同：
+
+```jsonc
+{
+  "mcpServers": {
+    "hltv": {
+      "command": "/path/to/hltv-mcp",
+      "args": [],
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-xxxxxxxxxxxxxxxx"
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 环境变量
 
 | 变量 | 默认值 | 说明 |
-|------|--------|------|
+|:-----|:-------|:-----|
 | `HTTP_PORT` | `8082` | HTTP 监听端口 |
 | `HTTP_HOST` | `0.0.0.0` | HTTP 监听地址 |
 | `FIRECRAWL_API_KEY` | — | Firecrawl API Key（赛程抓取绕过 Cloudflare） |
@@ -147,40 +284,9 @@ Docker 部署后 MCP stdio 不可用（容器隔离）。如需 MCP 功能，使
 | `HLTV_RETRY_COUNT` | `2` | HTTP 重试次数 |
 | `DEFAULT_RESULT_LIMIT` | `5` | 默认查询结果数 |
 
-完整配置见 `internal/config/config.go`。
+---
 
-## 项目结构
-
-```
-├── main.go                    # MCP stdio + HTTP 双 goroutine 入口
-├── Dockerfile                 # 三阶段构建
-├── internal/
-│   ├── types/         # 共享类型定义
-│   ├── config/        # 环境变量配置
-│   ├── crypto/        # AES-256-GCM 加解密（API Key 持久化）
-│   ├── cache/         # 内存缓存（TTL + stale + 并发合并）
-│   ├── client/        # HTTP 客户端 + Firecrawl CF 绕过
-│   ├── scraper/       # 7 个 HLTV 爬虫模块 + searchHLTV 公共解析
-│   ├── localization/  # 中英文名称映射（26 队伍 + 98 选手）
-│   ├── normalizer/    # HTML → 标准化数据结构
-│   ├── facade/        # 核心编排层
-│   ├── summary/       # 中文摘要
-│   ├── renderer/      # 中文格式化输出
-│   ├── mcp/           # 9 MCP 工具注册 + stdio 传输
-│   ├── http/          # chi router + REST API + SPA fallback
-│   ├── storage/       # SQLite 持久化（migration + Store + CRUD）
-│   └── translator/    # LLM 翻译（OpenAI 兼容 API）
-├── frontend/          # React + Vite + Tailwind
-│   └── src/pages/     # 5 个管理面板页面
-```
-
-## 测试
-
-```bash
-go test github.com/arcdent/hltv-mcp/internal/... -v -timeout 30s
-```
-
-## 手动构建部署
+## 手动构建
 
 ### WSL / Linux 直接编译
 
@@ -195,11 +301,26 @@ sudo apt install -y golang-go nodejs npm
 cd frontend && npm install && npm run build && cd ..
 
 # 编译 Go
-go build -o hltv-mcp github.com/arcdent/hltv-mcp
+go build -o hltv-mcp .
 
-# 启动（指定 Chrome 路径或降级为纯 HTTP）
-HLTV_CHROME_PATH=$(which chromium-browser) ./hltv-mcp
-# 若无 Chrome：HLTV_DATA_SOURCE=direct ./hltv-mcp
+# 启动
+./hltv-mcp
+```
+
+### Windows 直接编译
+
+```powershell
+git clone https://github.com/ArcDent/HLTV-data.git
+cd HLTV-data
+
+# 构建前端
+cd frontend; npm install; npm run build; cd ..
+
+# 编译 Go
+go build -o hltv-mcp.exe .
+
+# 启动
+.\hltv-mcp.exe
 ```
 
 ### Docker 从源码构建
@@ -208,38 +329,55 @@ HLTV_CHROME_PATH=$(which chromium-browser) ./hltv-mcp
 git clone https://github.com/ArcDent/HLTV-data.git
 cd HLTV-data
 docker build -t hltv-mcp .
-docker run -d --name hltv-mcp -p 8082:8082 -v hltv-chrome-data:/tmp hltv-mcp
+docker run -d --name hltv-mcp -p 8082:8082 -v hltv-data:/data hltv-mcp
 ```
 
-## 最近更新
+### 端口管理
 
-### 2026-05-31
+```bash
+# 按端口杀进程
+kill $(lsof -t -i:8082) 2>/dev/null || fuser -k 8082/tcp
 
-- **代码瘦身收敛**：删除历史设计文档、stale 构建产物、未引用图标；收敛 8 个不必要导出符号（facade/mcp/normalizer/localization）；消除空 Renderer struct → 包级函数；合并 team/player 搜索重复逻辑为 searchHLTV；删除 dead getTeamOverride/getPlayerOverride；修复 Store.Close() 资源泄漏
-- **API Key 保存修复**：`TranslateConfig` 缺少 JSON 标签导致 `provider_url`/`api_key` 解码为空
+# 按进程名杀
+pkill -f hltv-mcp
+```
 
-### 2026-05-29
+### 运行测试
 
-- **前端 SSE 实时刷新**：`useSSE` hook 模块级 EventSource 单例，后台抓取完成后 SSE 推送前端自动重取；Matches / TeamDetail / PlayerDetail / News 四个页面覆盖
-- **长期化存储**：SQLite 持久化存储（`data/hltv.db`），三层数据回退（内存缓存 → SQLite 历史 → HLTV 实时抓取）；SSE 推送前端自动刷新（`GET /api/sse`）；赛程三分类查询；5 张实体表 + 自动过期清理
-- **队伍简称编辑修复**：`PutTeamNickname` 强制 `LookupTeam` 门禁限制仅目录内 26 队可编辑简称，非目录队伍返回 400 后端错误（前端静默吞掉）；移除门禁改为直接保存，目录内队伍仍解析 canonical name；`BuildFullDict` 新增所有 override 直接 key-value 映射，确保非目录队伍昵称同步至赛程页面
-- **赛程覆盖面修复**：HLTV 新版 `.match` 嵌套两层导致选择器双重匹配、遗漏 6 月后赛程；改用 `.match-wrapper` 精确去重 + `data-match-id` 属性提取 ID；收录条件放宽为至少一方已知，覆盖范围从 36 场（5 天）扩展到 55 场（7 天，含淘汰赛待定对手）
-- **赛程多词队名截断修复**：HLTV 赛程 HTML 改为 `.match-teamname` 子元素结构，旧 `strings.Fields` 解析器截断 NaVi（Natus Vincere）、The MongolZ 等多词队名；改用 goquery 选择器直接提取
-- **依赖收敛**：删除 chromedp 依赖和 115 行死代码；删除 `internal/errors` 包；删除 4 跳死参数链；Docker 镜像缩小 ~90%；合并 docker-compose；scraper 提取共享 `fetchDoc` 消除 10+ 处重复样板
-- **搜索页路由切换修复**：`SearchableList` 添加 `key={type}` 强制重新挂载；修正 Go embed 指令
-- **Firecrawl 集成 + 赛程全面恢复**：通过 Firecrawl API 绕过 HLTV Cloudflare 封锁，`/matches` 端点恢复正常，覆盖范围从今日到 IEM Cologne Major 2026 主赛事（6 月 11 日），共 67 场比赛；重写 `NormalizeUpcomingMatches` 支持多个 `.matches-list-section` 容器；新增 `FIRECRAWL_API_KEY` 环境变量；匹配详情增加 `GoFrame` 兼容性修复
-- **HLTV Cloudflare 封锁修复**：HLTV 全面启用 Cloudflare 防护，`/matches`、`/results` 等页面返回 403 Challenge；修复 `NormalizeUpcomingMatches` nil pointer panic；所有 HTTP handler 添加超时保护
-- **选手数据分层修复**：HLTV 新版选手页无 `.all-time-stat`，代码改为先行尝试旧版生涯战斗统计，再回退到 `.highlighted-stat` 提取生涯概览；3 月 Rating 与生涯统计明确分离不再混淆；前端新增 `生涯概览` 网格和 `StatBadge` 组件
-- **HLTV 爬虫适应新布局**：HLTV 选手页正在进行 A/B 式改版，前端修复 React 条件渲染零值陷阱
+```bash
+go test ./internal/... -v -timeout 30s
+```
 
-### 2026-05-28
+---
 
-- **前端别名编辑 UX 改进**：TeamDetail / PlayerDetail 去掉 ✏️ 铅笔图标，改为点击别名文字本身触发编辑；PlayerDetail 的国籍、年龄、队伍信息移至别名同一行显示
-- **代码深度收敛**：删除 6 个文件（`events.go`、`news_article.go` ×2、`nicknames.json`、`Teams.tsx`、`Players.tsx`），合并前端搜索页为 `SearchPage`；废弃 `match_command_parse` MCP 工具（MCP 工具总数 10 → 9）
-- **chromedp 修复**：`chromedp/headless-shell`（Chromium 148）传入 `--headless` 会导致 Chrome 无法启动，修复为 `Flag("headless", false)` 覆盖默认值，并添加 10s `NewContext` 超时保护
-- **Docker SSL 修复**：`chromedp/headless-shell` 基础镜像不含 `ca-certificates`，导致 Go HTTP 客户端 TLS 验证失败，添加 `apt-get install ca-certificates`
-- **昵称字典后端迁移**：新增 `overrides.go` 持久化覆盖层 + REST API（`GET/PUT /api/nicknames*`），前端硬编码昵称字典全部迁移至后端
+## REST API 速览
 
-## 灵感来源
+```bash
+curl http://localhost:8082/api/health              # 健康检查
+curl http://localhost:8082/api/status              # 服务状态
+curl http://localhost:8082/api/matches/today       # 今日赛程
+curl http://localhost:8082/api/search?q=Vitality   # 搜索
+curl http://localhost:8082/api/news/realtime?limit=10  # 实时新闻
+```
 
-本项目是对 [hltv-api](https://github.com/M3MONs/hltv-api) 的 Go 语言完全重建。将原 TypeScript MCP 服务（基于 [hltv-api](https://github.com/M3MONs/hltv-api) Python 爬虫 API 构建）统一为 Go 单一二进制，去掉外部 Python 依赖，保留全部 10 个 MCP 工具和中文本地化体系，并增加 React Web 管理面板。
+---
+
+## 致谢
+
+- [hltv-api](https://github.com/M3MONs/hltv-api) — 原始 Python HLTV 爬虫 API
+- [mcp-go](https://github.com/mark3labs/mcp-go) — Go MCP SDK
+- [goquery](https://github.com/PuerkitoBio/goquery) — HTML 解析
+- [chi](https://github.com/go-chi/chi) — HTTP 路由
+- [Firecrawl](https://firecrawl.dev) — Cloudflare 绕过
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [ArcDent](https://github.com/ArcDent)**
+
+**Star ⭐ 如果这个项目对你有帮助！**
+
+</div>
+
+<!-- markdownlint-restore -->
