@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import PlayerDetail from './PlayerDetail'
 import TeamDetail from './TeamDetail'
+import EmptyState from './EmptyState'
 import useNicknames from '../hooks/useNicknames'
 
 type Props = {
@@ -49,16 +50,8 @@ export default function SearchableList({ type, placeholder, emptyHint, apiSearch
         </div>
 
         {loading && <div className="spinner" />}
-        {!loading && filtered === null && (
-          <div className="card" style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--text-secondary)' }}>
-            {emptyHint}
-          </div>
-        )}
-        {!loading && filtered?.length === 0 && (
-          <div className="card" style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--text-secondary)' }}>
-            无匹配结果
-          </div>
-        )}
+        {!loading && filtered === null && <EmptyState message={emptyHint} />}
+        {!loading && filtered?.length === 0 && <EmptyState message="无匹配结果" />}
         {filtered && filtered.length > 0 && (
           <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
             {filtered.map((item, i) => (

@@ -38,12 +38,11 @@ export default function Modal({ children, onClose, width, maxHeight, fullscreen 
       >
         <button
           onClick={onClose}
+          className="icon-btn"
+          aria-label="Close"
           style={{
             position: 'absolute', top: 14, right: 14, width: 30, height: 30,
-            borderRadius: '50%', border: '1px solid var(--border-default)',
-            background: 'var(--bg-tertiary)', color: 'var(--text-secondary)',
-            fontSize: 16, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16,
           }}
         >✕</button>
         {children}
