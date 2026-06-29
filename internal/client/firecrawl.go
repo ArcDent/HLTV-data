@@ -32,7 +32,7 @@ func (c *HltvClient) FetchViaFirecrawl(ctx context.Context, path string) ([]byte
 		return nil, fmt.Errorf("FIRECRAWL_API_KEY not configured")
 	}
 
-	url := hltvBaseURL + path
+	url := baseURL + path
 	reqBody := firecrawlReq{
 		URL:     url,
 		Formats: []string{"rawHtml"},
