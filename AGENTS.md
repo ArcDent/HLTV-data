@@ -16,7 +16,7 @@
 │   ├── config/              # 环境变量配置
 │   ├── crypto/              # AES-256-GCM 加解密
 │   ├── cache/               # TTL + stale + 并发合并
-│   ├── client/              # HTTP + Firecrawl 客户端
+│   ├── client/              # uTLS HTTP 客户端
 │   │   ├── client.go        # FetchHTML (uTLS + retry + 统一错误码, doOnce 修 defer 泄漏)
 │   │   └── transport.go     # uTLS transport builder (iOS Safari 指纹 + http2 DialTLSContext)
 │   ├── scraper/             # fetchDoc + searchHLTV 共享 + 7 爬虫模块 + rankings
@@ -39,11 +39,11 @@
 ```
 
 ## 最近操作
-- 2026-06-30：Docker 黑盒测试通过 — chrome-devtools 验证 5 主页面（首页/赛程/队伍/选手/新闻）+ 新闻详情交互；API 全 200（events/news/realtime/rankings/nicknames/translate/config/news/article）；Lighthouse 首页 a11y 93 / Best Practices 81 / SEO 82；performance trace LCP 868ms / CLS 0.02
+- 2026-06-30：删除 Firecrawl 文档残留 — README.md（9 处：client 描述 / Firecrawl API Key 段 / 反爬虫表 / docker run -e ×2 / docker compose env / OpenCode env 段 / 环境变量表行 / 致谢）+ AGENTS.md（client 描述 / CF 分层段 / 下一步 /results 行）；代码已无 Firecrawl（uTLS 重构替代），仅清文档残留
+- 2026-06-30：Docker 黑盒测试通过 + docs refresh — chrome-devtools 验证 5 主页面（首页/赛程/队伍/选手/新闻）+ 新闻详情交互；API 全 200（events/news/realtime/rankings/nicknames/translate/config/news/article）；Lighthouse a11y 93 / BP 81 / SEO 82；LCP 868ms / CLS 0.02；刷新 README + AGENTS.md + 新增 .dockerignore（commit 5280f26）
 - 2026-06-29：uTLS 重构完成 — transport.go (HelloIOS_Auto 指纹 + http2 自定义 DialTLSContext + iOS Safari UA) + client.go FetchHTML (retry + 统一错误码, doOnce 修复 defer 泄漏) + types.go 统一错误码 (NETWORK/READ/CHALLENGE/NOT_FOUND/SERVER/UNAVAILABLE + Retryable bool) + CF 检测签名 (Just a moment / cf-browser-verify / Attention Required / Enable JavaScript...)
 - 2026-06-29：前端重设计完成 — Esports 暗色设计系统 (#0d1117 / #ff4655) 4 个 CSS 文件 + 9 组件 + 10 页面重写 + chart.js 雷达图 (PlayerDetail) + 移动端汉堡菜单 + /cache 路由移除 + Dashboard/Cache/legacy.css 删除
 - 2026-06-29：Docker 构建修复 — npm ci 因 @emnapi 跨平台 optionalDependency lock 不匹配失败（Windows npm 11 lock 缺 linux 平台条目，alpine npm 10 期望）→ Dockerfile 改 `npm install --no-audit --no-fund`（不严格校验 lock，自动拉 linux 平台依赖）
-- 2026-05-31：README.md 全面重写 — MaiCLI 风格，ASCII Logo + 徽章 + 8 章节结构；代码瘦身收敛 + 翻译长效化存储
 
 ## 关键发现
 
@@ -86,8 +86,7 @@
 
 ### CF 分层
 - **HTTP 直连可用**：`/player/`、`/team/`、`/search`、`/news/`
-- **Firecrawl 回退**：`/matches`（HTTP 403 时自动回退，需 `FIRECRAWL_API_KEY`）
-- **被 Cloudflare 封锁 (403)**：`/matches`、`/results`、`/`
+- **uTLS 绕过 CF**：`/matches`、`/results`、`/`（HelloIOS_Auto 指纹绕过浏览器挑战）
 
 ### 三层回退 (Cache -> SQLite -> HLTV)
 - **Type A**（player/team/news article detail）：`GetXxxCached` 方法内联三层逻辑，Tier 2 命中后后台 goroutine `refreshXxx` 更新缓存，调用 `broadcast` 推送 SSE 事件
@@ -131,7 +130,7 @@
 ## 下一步
 - 部署新镜像（含 uTLS 重构 + 前端重设计）到 ghcr.io，验证翻译长效化 + uTLS 抗 CF
 - 前端优化：JS bundle code-split（>500kB 警告）、搜索框加 id/name 提升 a11y
-- 考虑为 /results 页面也添加 Firecrawl 回退
+- 验证 /results 页面 uTLS 绕过稳定性
 
 ## 进行中
 - 无

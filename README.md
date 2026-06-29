@@ -56,7 +56,7 @@ hltv-mcp-fully-rebuild/
 │   ├── config/             # 环境变量配置
 │   ├── crypto/             # AES-256-GCM 加解密（API Key 持久化）
 │   ├── cache/              # 内存缓存（TTL + stale + 并发合并）
-│   ├── client/             # uTLS (iOS Safari 指纹) + Firecrawl CF 绕过
+│   ├── client/             # uTLS (iOS Safari 指纹) CF 绕过
 │   ├── scraper/            # 7 个 HLTV 爬虫模块 + 公共搜索解析
 │   ├── localization/       # 中英文名称映射（26 队伍 + 98 选手）
 │   ├── normalizer/         # HTML → 标准化数据结构
@@ -95,17 +95,6 @@ hltv-mcp-fully-rebuild/
 
 支持 OpenAI、DeepSeek、Groq、Ollama 等所有 OpenAI 兼容接口。
 
-### Firecrawl API Key（推荐）
-
-HLTV `/matches` 页面使用 Cloudflare 防护，需配置 Firecrawl API Key 绕过：
-
-1. 注册 [Firecrawl](https://firecrawl.dev) 账号
-2. 获取 API Key（格式：`fc-xxxxxxxxxxxxxxxx`）
-3. 通过环境变量 `FIRECRAWL_API_KEY` 传入
-
-> [!WARNING]
-> 不配置 Firecrawl Key 不影响队伍/选手搜索、新闻查询等功能，仅赛程（`/matches`）不可用。
-
 ---
 
 ## 功能特性
@@ -118,7 +107,7 @@ HLTV `/matches` 页面使用 Cloudflare 防护，需配置 Firecrawl API Key 绕
 | **REST API** | 健康检查、搜索、赛程、新闻端点 |
 | **Web 管理面板** | React 19 SPA，首页 / 赛程 / 队伍 / 选手 / 新闻 + 详情页 + 设置 |
 | **SSE 实时推送** | 后端抓取完成后自动推送前端刷新 |
-| **反爬虫** | uTLS iOS 指纹 + HTTP 直连 + Firecrawl API 绕过 Cloudflare |
+| **反爬虫** | uTLS iOS 指纹 + HTTP 直连绕过 Cloudflare |
 | **中文输出** | 26 支队伍民间昵称 + 98 名选手中文简称 + 中文摘要 |
 
 ### 数据能力
@@ -171,7 +160,7 @@ git clone https://github.com/ArcDent/HLTV-data.git
 cd HLTV-data
 
 # 启动（从 GHCR 拉取预构建镜像）
-FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx docker compose up -d
+docker compose up -d
 ```
 
 浏览器访问 `http://localhost:8082`。
@@ -182,14 +171,12 @@ FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx docker compose up -d
 # Windows（PowerShell）
 docker run -d --name hltv-mcp `
   -p 8082:8082 `
-  -e FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx `
   -v hltv-data:/data `
   ghcr.io/arcdent/hltv-data:latest
 
 # Linux / macOS / WSL
 docker run -d --name hltv-mcp \
   -p 8082:8082 \
-  -e FIRECRAWL_API_KEY=fc-xxxxxxxxxxxxxxxx \
   -v hltv-data:/data \
   ghcr.io/arcdent/hltv-data:latest
 ```
@@ -250,24 +237,6 @@ Docker 部署后 MCP stdio 不可用（容器隔离）。如需 MCP 功能，使
 }
 ```
 
-### OpenCode 特殊情况
-
-OpenCode 的 MCP 注册方式有所不同：
-
-```jsonc
-{
-  "mcpServers": {
-    "hltv": {
-      "command": "/path/to/hltv-mcp",
-      "args": [],
-      "env": {
-        "FIRECRAWL_API_KEY": "fc-xxxxxxxxxxxxxxxx"
-      }
-    }
-  }
-}
-```
-
 ---
 
 ## 环境变量
@@ -276,7 +245,6 @@ OpenCode 的 MCP 注册方式有所不同：
 |:-----|:-------|:-----|
 | `HTTP_PORT` | `8082` | HTTP 监听端口 |
 | `HTTP_HOST` | `0.0.0.0` | HTTP 监听地址 |
-| `FIRECRAWL_API_KEY` | — | Firecrawl API Key（赛程抓取绕过 Cloudflare） |
 | `HLTV_DB_PATH` | `data/hltv.db` | SQLite 数据库路径 |
 | `HLTV_DB_RETENTION_MATCHES` | `90` | 比赛数据保留天数 |
 | `HLTV_DB_RETENTION_NEWS` | `30` | 新闻数据保留天数 |
@@ -369,7 +337,6 @@ curl http://localhost:8082/api/news/realtime?limit=10  # 实时新闻
 - [mcp-go](https://github.com/mark3labs/mcp-go) — Go MCP SDK
 - [goquery](https://github.com/PuerkitoBio/goquery) — HTML 解析
 - [chi](https://github.com/go-chi/chi) — HTTP 路由
-- [Firecrawl](https://firecrawl.dev) — Cloudflare 绕过
 - [utls](https://github.com/refraction-networking/utls) — uTLS TLS 指纹库
 
 ---
