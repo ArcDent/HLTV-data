@@ -32,7 +32,7 @@ func (h *Handlers) GetTeam(w http.ResponseWriter, r *http.Request) {
 	td, err := h.f.GetTeamDetailCached(ctx, id, "")
 	if err != nil {
 		writeJSON(w, map[string]any{
-			"error": map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "详情暂时不可用"},
+			"error": map[string]any{"code": "UNAVAILABLE", "message": "详情暂时不可用"},
 			"meta":  map[string]any{"partial": true},
 		})
 		return
@@ -52,7 +52,7 @@ func (h *Handlers) GetPlayer(w http.ResponseWriter, r *http.Request) {
 	pd, err := h.f.GetPlayerDetailCached(ctx, id, "")
 	if err != nil {
 		writeJSON(w, map[string]any{
-			"error": map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "详情暂时不可用"},
+			"error": map[string]any{"code": "UNAVAILABLE", "message": "详情暂时不可用"},
 			"meta":  map[string]any{"partial": true},
 		})
 		return

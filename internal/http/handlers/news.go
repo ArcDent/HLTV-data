@@ -40,7 +40,7 @@ func (h *Handlers) GetNewsArticle(w http.ResponseWriter, r *http.Request) {
 	article, err := h.f.GetNewsArticleCached(ctx, url)
 	if err != nil {
 		writeJSON(w, map[string]any{
-			"error": map[string]any{"code": "UPSTREAM_UNAVAILABLE", "message": "文章抓取失败，请在 HLTV 阅读原文"},
+			"error": map[string]any{"code": "UNAVAILABLE", "message": "文章抓取失败，请在 HLTV 阅读原文"},
 			"meta":  map[string]any{"partial": true},
 		})
 		return
