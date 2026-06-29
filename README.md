@@ -15,8 +15,8 @@
 <div align="center">
 
 ![Go](https://img.shields.io/badge/Go-1.26-00ADD8?style=for-the-badge&logo=go&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-GHCR-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20|%20Linux%20|%20macOS-blue?style=for-the-badge)
@@ -56,7 +56,7 @@ hltv-mcp-fully-rebuild/
 │   ├── config/             # 环境变量配置
 │   ├── crypto/             # AES-256-GCM 加解密（API Key 持久化）
 │   ├── cache/              # 内存缓存（TTL + stale + 并发合并）
-│   ├── client/             # HTTP 客户端 + Firecrawl CF 绕过
+│   ├── client/             # uTLS (iOS Safari 指纹) + Firecrawl CF 绕过
 │   ├── scraper/            # 7 个 HLTV 爬虫模块 + 公共搜索解析
 │   ├── localization/       # 中英文名称映射（26 队伍 + 98 选手）
 │   ├── normalizer/         # HTML → 标准化数据结构
@@ -67,8 +67,8 @@ hltv-mcp-fully-rebuild/
 │   ├── http/               # chi router + REST API + SPA fallback
 │   ├── storage/            # SQLite 持久化（migration + Store + CRUD）
 │   └── translator/         # LLM 翻译（OpenAI 兼容 API）
-└── frontend/               # React 18 + Vite + Tailwind CSS
-    └── src/pages/          # 5 个管理面板页面
+└── frontend/               # React 19 + Vite 8 + 自研设计系统 CSS tokens
+    └── src/pages/          # 10 个页面（首页/赛程/队伍/选手/新闻 + 详情 + 设置）
 ```
 
 ---
@@ -116,9 +116,9 @@ HLTV `/matches` 页面使用 Cloudflare 防护，需配置 Firecrawl API Key 绕
 |:-----|:-----|
 | **9 个 MCP 工具** | 队伍/选手解析、赛程/赛果查询、实时/归档新闻 |
 | **REST API** | 健康检查、搜索、赛程、新闻端点 |
-| **Web 管理面板** | React SPA，Dashboard / Matches / Search / News / Cache 五个页面 |
+| **Web 管理面板** | React 19 SPA，首页 / 赛程 / 队伍 / 选手 / 新闻 + 详情页 + 设置 |
 | **SSE 实时推送** | 后端抓取完成后自动推送前端刷新 |
-| **反爬虫** | HTTP 直连 + Firecrawl API 绕过 Cloudflare 封锁 |
+| **反爬虫** | uTLS iOS 指纹 + HTTP 直连 + Firecrawl API 绕过 Cloudflare |
 | **中文输出** | 26 支队伍民间昵称 + 98 名选手中文简称 + 中文摘要 |
 
 ### 数据能力
@@ -152,11 +152,12 @@ HLTV `/matches` 页面使用 Cloudflare 防护，需配置 Firecrawl API Key 绕
 
 | 页面 | 路由 | 功能 |
 |:-----|:-----|:-----|
-| **Dashboard** | `/` | 服务状态概览 |
-| **Matches** | `/matches` | 赛程浏览，SSE 实时刷新 |
-| **Search** | `/search` | 队伍/选手搜索 |
-| **News** | `/news` | 新闻列表，SSE 实时刷新 |
-| **Cache** | `/cache` | 缓存使用情况 |
+| **首页** | `/` | 今日精选 + 热门新闻 + 排名变动 |
+| **赛程** | `/matches` | 赛程浏览（今日/即将/赛果），SSE 实时刷新 |
+| **队伍** | `/teams` | 队伍搜索 + 对比 + 详情 |
+| **选手** | `/players` | 选手搜索 + TOP 20 + 地区筛选 + 详情（雷达图） |
+| **新闻** | `/news` | 实时/归档新闻列表 + 详情弹层 + 翻译 |
+| **设置** | `/settings` | 翻译 LLM 配置 + 别名编辑 |
 
 ---
 
@@ -369,6 +370,7 @@ curl http://localhost:8082/api/news/realtime?limit=10  # 实时新闻
 - [goquery](https://github.com/PuerkitoBio/goquery) — HTML 解析
 - [chi](https://github.com/go-chi/chi) — HTTP 路由
 - [Firecrawl](https://firecrawl.dev) — Cloudflare 绕过
+- [utls](https://github.com/refraction-networking/utls) — uTLS TLS 指纹库
 
 ---
 
