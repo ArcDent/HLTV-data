@@ -32,6 +32,7 @@ type HltvFacade struct {
 	ns     *scraper.NewsScraper
 	rns    *scraper.RealtimeNewsScraper
 	nas    *scraper.NewsArticleScraper
+	rks    *scraper.RankingsScraper
 }
 
 // New creates a new HltvFacade
@@ -49,6 +50,7 @@ func New(cfg *config.Config, c *cache.Cache, cli *client.HltvClient, store *stor
 		ns:     scraper.NewNewsScraper(cli),
 		rns:    scraper.NewRealtimeNewsScraper(cli),
 		nas:    scraper.NewNewsArticleScraper(cli),
+		rks:    scraper.NewRankingsScraper(cli),
 	}
 }
 
@@ -326,6 +328,70 @@ func (f *HltvFacade) errorResponse(query map[string]any, err error) *types.ToolR
 			Code: "INTERNAL_ERROR", Message: err.Error(),
 		},
 	}
+}
+
+// GetRankings fetches the HLTV team ranking table. v1 uses cache-only (no
+// SQLite store table); the design says "no backend history needed initially".
+func (f *HltvFacade) GetRankings(ctx context.Context) ([]types.TeamRankingRow, error) {
+	key := "rankings:teams"
+	if cached, ok := f.cache.Get(key); ok {
+		return cached.([]types.TeamRankingRow), nil
+	}
+	rows, err := f.rks.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	f.cache.Set(key, rows, f.cfg.CacheTTLMatches)
+	return rows, nil
+}
+
+// CompareTeams returns side-by-side detail for two teams plus head-to-head
+// data if any shared recent matches exist. Reuses GetTeamDetailCached (Type A).
+func (f *HltvFacade) CompareTeams(ctx context.Context, aID, bID int) (*types.TeamComparison, error) {
+	a, err := f.GetTeamDetailCached(ctx, aID, "")
+	if err != nil {
+		return nil, err
+	}
+	b, err := f.GetTeamDetailCached(ctx, bID, "")
+	if err != nil {
+		return nil, err
+	}
+	return buildComparison(&a, &b), nil
+}
+
+// buildComparison maps two TeamDetail structs into a TeamComparison. For
+// HeadToHead: intersect the two teams' recent-match opponent lists; if no
+// overlap, leave HeadToHead nil. Does NOT fabricate H2H data.
+func buildComparison(a, b *types.TeamDetail) *types.TeamComparison {
+	// Head-to-head: count recent matches where one team's opponent is the other.
+	var winsA, winsB int
+	var recent []bool
+	aName := a.Profile.Name
+	bName := b.Profile.Name
+	for _, m := range a.RecentMatches {
+		opp := m.Opponent
+		if opp == "" {
+			opp = m.Team2
+		}
+		if opp == bName || (m.Team1 == aName && m.Team2 == bName) || (m.Team2 == aName && m.Team1 == bName) {
+			recent = append(recent, m.Result == types.OutcomeWin)
+			if m.Result == types.OutcomeWin {
+				winsA++
+			} else if m.Result == types.OutcomeLoss {
+				winsB++
+			}
+		}
+	}
+	cmp := &types.TeamComparison{TeamA: *a, TeamB: *b}
+	if len(recent) > 0 {
+		cmp.HeadToHead = &types.HeadToHead{
+			TotalMatches:  len(recent),
+			WinsA:         winsA,
+			WinsB:         winsB,
+			RecentResults: recent,
+		}
+	}
+	return cmp
 }
 
 // CacheEntries returns the number of entries currently in the cache

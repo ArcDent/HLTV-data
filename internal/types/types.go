@@ -359,6 +359,31 @@ type TeamRosterPlayer struct {
 	Rating  float64 `json:"rating"`
 }
 
+// TeamRankingRow is a single row of HLTV's /ranking/teams table.
+type TeamRankingRow struct {
+	Rank    int    `json:"rank"`
+	TeamID  int    `json:"teamId"`
+	Name    string `json:"name"`
+	Country string `json:"country"`
+	Points  string `json:"points"`
+}
+
+// TeamComparison holds side-by-side data for two teams.
+type TeamComparison struct {
+	TeamA      TeamDetail `json:"teamA"`
+	TeamB      TeamDetail `json:"teamB"`
+	HeadToHead *HeadToHead `json:"headToHead,omitempty"`
+}
+
+// HeadToHead holds head-to-head matchup data between two teams.
+type HeadToHead struct {
+	TotalMatches int    `json:"totalMatches"`
+	WinsA        int    `json:"winsA"`
+	WinsB        int    `json:"winsB"`
+	// RecentResults: true = team A won that encounter.
+	RecentResults []bool `json:"recentResults"`
+}
+
 // NewsArticle is the full text of a news article scraped from HLTV
 type NewsArticle struct {
 	Title       string `json:"title"`
