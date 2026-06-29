@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import TopBar from './components/TopBar'
 import SubNav from './components/SubNav'
 import Drawer from './components/Drawer'
 import Homepage from './pages/Homepage'
 import Matches from './pages/Matches'
-import SearchPage from './pages/SearchPage'
+import Teams from './pages/Teams'
+import Players from './pages/Players'
 import News from './pages/News'
 import Settings from './pages/Settings'
 
@@ -17,10 +18,24 @@ const nav = [
   { to: '/news',      label: '新闻' },
 ]
 
+type SettingsTab = 'cache' | 'theme' | 'translation' | 'status'
+
 export default function App() {
   const [search, setSearch] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('cache')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
+  // Allow other pages (e.g. News) to open the Settings drawer on a tab.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent<SettingsTab>).detail ?? 'cache'
+      setSettingsTab(tab)
+      setSettingsOpen(true)
+    }
+    window.addEventListener('open-settings', handler as EventListener)
+    return () => window.removeEventListener('open-settings', handler as EventListener)
+  }, [])
 
   return (
     <div className="h-full" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
@@ -28,7 +43,7 @@ export default function App() {
         search={search}
         onSearch={setSearch}
         liveCount={0}
-        onOpenSettings={() => setSettingsOpen(true)}
+        onOpenSettings={() => { setSettingsTab('cache'); setSettingsOpen(true) }}
         onToggleMobileNav={() => setMobileNavOpen((v) => !v)}
         mobileNavOpen={mobileNavOpen}
       />
@@ -56,14 +71,14 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Homepage />} />
           <Route path="/matches" element={<Matches />} />
-          <Route path="/teams" element={<SearchPage key="teams" type="team" placeholder="搜索队伍 — 支持英文 / 中文 / 别名（如 Spirit、绿龙、小蜜蜂）" emptyHint="输入队名开始搜索" />} />
-          <Route path="/players" element={<SearchPage key="players" type="player" placeholder="搜索选手 — 如 ZywOo、载物、s1mple" emptyHint="输入选手名开始搜索" />} />
+          <Route path="/teams" element={<Teams />} />
+          <Route path="/players" element={<Players />} />
           <Route path="/news" element={<News />} />
         </Routes>
       </main>
 
       <Drawer open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-        <Settings />
+        <Settings initialTab={settingsTab} />
       </Drawer>
     </div>
   )

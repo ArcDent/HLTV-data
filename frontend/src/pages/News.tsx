@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useSSE } from '../hooks/useSSE'
-import { useTranslateConfig, TranslateModal } from '../components/TranslateProvider'
+import { useTranslateConfig } from '../components/TranslateProvider'
 import NewsDetail from '../components/NewsDetail'
+import EmptyState from '../components/EmptyState'
 
 type Tab = 'realtime' | 'archive'
 
@@ -20,10 +21,20 @@ function hashTitle(t: string) {
   return h.toString(16)
 }
 
+function readTime(text?: string): number {
+  if (!text) return 1
+  const words = text.split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.round(words / 200))
+}
+
+const openTranslationSettings = () => {
+  window.dispatchEvent(new CustomEvent('open-settings', { detail: 'translation' }))
+}
+
 export default function News() {
   const [tab, setTab] = useState<Tab>('realtime')
   const [data, setData] = useState<any>(null)
-  const { cfg, save, open, setOpen, saveCount } = useTranslateConfig()
+  const { cfg, saveCount } = useTranslateConfig()
   const [translations, setTranslations] = useState<Record<string, string>>({})
   const [translating, setTranslating] = useState<Set<string>>(new Set())
   const [selectedNewsUrl, setSelectedNewsUrl] = useState<string | null>(null)
@@ -91,72 +102,74 @@ export default function News() {
 
   const items: any[] = data?.items ?? []
 
-  const card: React.CSSProperties = {
-    background: 'var(--card)', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius)', padding: '14px 20px', boxShadow: 'var(--card-shadow)',
-  }
-  const tabBtn = (active: boolean): React.CSSProperties => ({
-    fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-display)',
-    letterSpacing: '0.04em', textTransform: 'uppercase' as const,
-    color: active ? 'var(--gold)' : 'var(--text-muted)',
-    borderBottom: active ? '2px solid var(--gold)' : '2px solid transparent',
-    paddingBottom: 6, background: 'none', cursor: 'pointer',
-  })
-
   return (
-    <div className="anim-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border)', paddingBottom: 0, alignItems: 'center' }}>
+    <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-4)', borderBottom: '1px solid var(--border-default)', paddingBottom: 0, alignItems: 'center' }}>
         {[{ key: 'realtime', label: '实时新闻' }, { key: 'archive', label: '归档新闻' }].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key as Tab)} style={tabBtn(tab === t.key)}>
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key as Tab)}
+            className="button"
+            style={{
+              fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-display)',
+              letterSpacing: '0.04em', textTransform: 'uppercase' as const,
+              color: tab === t.key ? 'var(--accent-red)' : 'var(--text-secondary)',
+              borderBottom: tab === t.key ? '2px solid var(--accent-red)' : '2px solid transparent',
+              background: 'none', border: 'none', borderBottomWidth: 2, borderBottomStyle: 'solid', borderBottomColor: tab === t.key ? 'var(--accent-red)' : 'transparent',
+              paddingBottom: 'var(--space-2)', borderRadius: 0,
+            }}
+          >
             {t.label}
           </button>
         ))}
         <div style={{ flex: 1 }} />
-        <button onClick={() => setOpen(true)} title="翻译设置" style={{
-          width: 32, height: 32, borderRadius: '50%',
-          border: '1px solid var(--border)', background: 'var(--card)',
-          color: cfg?.configured ? 'var(--gold)' : 'var(--text-muted)',
-          fontSize: 16, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>⚙</button>
+        <button
+          onClick={openTranslationSettings}
+          title="翻译设置"
+          className="button"
+          style={{
+            width: 32, height: 32, padding: 0, borderRadius: '50%',
+            color: cfg?.configured ? 'var(--accent-red)' : 'var(--text-tertiary)',
+            fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >⚙</button>
       </div>
-
-      {open && cfg && <TranslateModal cfg={cfg} onSave={save} onClose={() => setOpen(false)} />}
 
       <div key={tab} style={{ animation: 'slideUp 0.3s ease both' }}>
         {items.length === 0 && (
-          <div style={{ ...card, textAlign: 'center', padding: '80px 0', color: 'var(--text-muted)', fontSize: 15 }}>
-            {data ? '暂无新闻' : '加载中...'}
+          <EmptyState message={data ? '暂无新闻' : '加载中...'} />
+        )}
+        {items.length > 0 && (
+          <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--space-3)' }}>
+            {items.map((n, i) => {
+              const zh = translations[n.title]
+              const loading = translating.has(n.title)
+              const mins = readTime(n.body_text ?? n.summary ?? n.title)
+              return (
+                <div
+                  key={i}
+                  className="card hoverable"
+                  onClick={() => n.link && setSelectedNewsUrl(n.link)}
+                  style={{ cursor: 'pointer', minHeight: 120, display: 'flex', flexDirection: 'column' }}
+                >
+                  <span className="badge" style={{ background: 'rgba(255,123,0,0.15)', color: 'var(--accent-orange)', alignSelf: 'flex-start', marginBottom: 'var(--space-2)' }}>
+                    {n.category || '新闻'}
+                  </span>
+                  <div style={{ fontSize: 15, fontWeight: 500, lineHeight: 1.4, flex: 1 }}>{n.title}</div>
+                  {cfg?.configured && (
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 'var(--space-2)', lineHeight: 1.5 }}>
+                      {loading ? '翻译中...' : (zh || '')}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 'var(--space-2)' }}>
+                    <span>{n.published_at ?? n.relative_time ?? ''}</span>
+                    <span>{mins} min</span>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
-        {items.map((n, i) => {
-          const zh = translations[n.title]
-          const loading = translating.has(n.title)
-          return (
-            <div key={i} className="anim-in" onClick={() => n.link && setSelectedNewsUrl(n.link)} style={{
-              ...card, marginBottom: i < items.length - 1 ? 6 : 0,
-              flexDirection: 'column', alignItems: 'stretch', gap: 4,
-              animationDelay: `${i * 30}ms`,
-              cursor: 'pointer',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700,
-                  color: 'var(--gold)', minWidth: 24 }}>
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span style={{ flex: 1, fontSize: 16, fontWeight: 500 }}>{n.title}</span>
-                <span style={{ fontSize: 13, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                  {n.published_at ?? n.relative_time ?? ''}
-                </span>
-              </div>
-              {cfg?.configured && (
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', paddingLeft: 38, lineHeight: 1.5 }}>
-                  {loading ? '翻译中...' : (zh || '')}
-                </div>
-              )}
-            </div>
-          )
-        })}
       </div>
 
       {selectedNewsUrl && <NewsDetail url={selectedNewsUrl} onClose={() => setSelectedNewsUrl(null)} />}
