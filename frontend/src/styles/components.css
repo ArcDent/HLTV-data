@@ -98,3 +98,8 @@
 }
 .mobile-nav-overlay a { padding: var(--space-3) 0; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border-default); }
 .mobile-nav-overlay a.active { color: var(--accent-red); }
+
+/* Mobile: force modals fullscreen */
+@media (max-width: 768px) {
+  .modal-fullscreen { width: 100vw !important; height: 100vh !important; max-height: 100vh !important; max-width: 100vw !important; border-radius: 0 !important; }
+}

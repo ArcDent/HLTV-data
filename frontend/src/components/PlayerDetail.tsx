@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Chart from 'chart.js/auto'
 import useNicknames from '../hooks/useNicknames'
 import { useSSE } from '../hooks/useSSE'
 import Modal from './Modal'
 import { api } from '../api/client'
+import EmptyState from './EmptyState'
 
 type PlayerData = {
   profile: { id: number; name: string; real_name?: string; slug: string; country?: string; age?: number; team?: string }
@@ -20,6 +22,8 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
   const [loading, setLoading] = useState(true)
   const { playerNicknames, savePlayerNickname } = useNicknames()
   const [editingNick, setEditingNick] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const chartRef = useRef<Chart | null>(null)
 
   const fetchPlayer = useCallback(() => {
     setLoading(true)
@@ -30,112 +34,159 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
 
   useEffect(() => { fetchPlayer() }, [fetchPlayer])
 
-  // SSE: background refresh pushes updated player data
   useSSE('player', (evt) => {
     if (evt.id === id) { fetchPlayer() }
   })
 
   const p = data?.profile
   const abilities = data?.abilities ?? []
-  const top20 = data?.top20_ranks ? Object.entries(data.top20_ranks).sort((a,b) => Number(b[0])-Number(a[0])) : []
+  const top20 = data?.top20_ranks ? Object.entries(data.top20_ranks).sort((a, b) => Number(b[0]) - Number(a[0])) : []
+
+  // Radar chart via Chart.js
+  useEffect(() => {
+    if (!canvasRef.current || abilities.length === 0) return
+    if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
+
+    const labels = abilities.slice(0, 8).map(ab => ab.label_en)
+    const values = abilities.slice(0, 8).map(ab => {
+      if (ab.format === 'decimal') return ab.value / 2 * 100
+      return ab.max > 0 ? (ab.value / ab.max) * 100 : 0
+    })
+
+    chartRef.current = new Chart(canvasRef.current, {
+      type: 'radar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Abilities',
+          data: values,
+          backgroundColor: 'rgba(255,70,85,0.15)',
+          borderColor: 'rgba(255,70,85,1)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(255,70,85,1)',
+          pointRadius: 3,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { display: false, stepSize: 20 },
+            grid: { color: 'rgba(48,54,61,0.6)' },
+            angleLines: { color: 'rgba(48,54,61,0.6)' },
+            pointLabels: { color: '#8b949e', font: { size: 11 } },
+          },
+        },
+        plugins: { legend: { display: false } },
+      },
+    })
+
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
+  }, [abilities])
 
   return (
     <Modal onClose={onClose} width={580} maxHeight="90vh">
+      {loading && <div className="spinner" />}
+      {!loading && !p && <EmptyState message="详情暂时不可用" />}
 
-        {loading && <div style={{textAlign:'center',padding:60,color:'var(--text-muted)'}}>加载中...</div>}
-        {!loading && !p && <div style={{textAlign:'center',padding:60,color:'var(--text-muted)'}}>详情暂时不可用</div>}
-
-        {!loading && p && (
-          <>
-            <div style={{display:'flex',gap:14,marginBottom:14}}>
-              <div style={{width:56,height:56,borderRadius:'50%',background:'linear-gradient(135deg,var(--gold),#c48a0a)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,color:'#fff',fontWeight:700,fontFamily:'var(--font-display)',flexShrink:0}}>
-                {p.name.charAt(0)}
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:22,fontWeight:700,color:'var(--text)',lineHeight:1.2}}>{p.name}</div>
-                {p.real_name ? <div style={{fontSize:13,color:'var(--text-muted)'}}>{p.real_name}</div> : <div style={{fontSize:13,color:'var(--text-muted)'}}>暂无</div>}
-                <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4,alignItems:'center'}}>
-                  {editingNick ? (
-                    <input
-                      autoFocus
-                      defaultValue={playerNicknames[p.name] ?? ''}
-                      style={{fontSize:12,background:'var(--input-bg)',border:'1px solid var(--gold)',borderRadius:3,padding:'2px 6px',color:'var(--text)',width:100,outline:'none'}}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { savePlayerNickname(p.name, (e.target as HTMLInputElement).value); setEditingNick(false) }
-                        if (e.key === 'Escape') setEditingNick(false)
-                      }}
-                      onBlur={e => { savePlayerNickname(p.name, e.target.value); setEditingNick(false) }}
-                    />
-                  ) : (
-                    <>
-                      {playerNicknames[p.name] ? (
-                        <span onClick={() => setEditingNick(true)} style={{padding:'2px 8px',borderRadius:4,fontSize:11,background:'var(--gold-dim)',color:'var(--gold)',fontWeight:600,cursor:'pointer'}} title="点击编辑简称">
-                          {playerNicknames[p.name]}
-                        </span>
-                      ) : (
-                        <span onClick={() => setEditingNick(true)} style={{cursor:'pointer',fontSize:11,color:'var(--text-muted)',opacity:0.5}} title="添加简称">+ 添加简称</span>
-                      )}
-                    </>
-                  )}
-                  {p.country ? <span style={{padding:'2px 8px',background:'var(--input-bg)',borderRadius:4,fontSize:11,color:'var(--text-secondary)'}}>{p.country}</span> : <span style={{padding:'2px 8px',background:'var(--input-bg)',borderRadius:4,fontSize:11,color:'var(--text-muted)'}}>未知国籍</span>}
-                  {p.age ? <span style={{padding:'2px 8px',background:'var(--input-bg)',borderRadius:4,fontSize:11,color:'var(--text-secondary)'}}>Age {p.age}</span> : null}
-                  <span style={{padding:'2px 8px',background: p.team ? 'var(--gold-dim)' : 'var(--input-bg)',borderRadius:4,fontSize:11,color: p.team ? 'var(--gold)' : 'var(--text-muted)',fontWeight: p.team ? 600 : 400}}>{p.team || '暂无队伍'}</span>
-                </div>
-              </div>
+      {!loading && p && (
+        <>
+          {/* Header */}
+          <div style={{ display: 'flex', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24, color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)', flexShrink: 0,
+            }}>
+              {p.name.charAt(0)}
             </div>
-
-            {top20.length > 0 && (
-              <div style={{display:'flex',gap:4,flexWrap:'wrap',justifyContent:'center',marginBottom:16}}>
-                {top20.map(([year, rank]) => (
-                  <span key={year} style={{fontSize:11,fontWeight:700,padding:'2px 7px',borderRadius:10,
-                    background: rank===1?'linear-gradient(135deg,#f0c040,#c48a0a)':rank===2?'#e0e0d8':'rgba(196,138,10,0.12)',
-                    color: rank===1?'#fff':rank===2?'#6b7280':'var(--gold)'}}>{year} #{rank}</span>
-                ))}
-              </div>
-            )}
-
-            <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:600,color:'var(--gold)',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:12,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>
-              能力评分 <span style={{fontSize:13,fontWeight:400,color:'var(--text-muted)'}}>近 3 月 · {data.rating.maps} maps</span>
-            </div>
-
-            <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:24,marginBottom:16}}>
-              <svg width="140" height="140" viewBox="0 0 140 140">
-                {[66,48,30,12].map(r => <circle key={r} cx="70" cy="70" r={r} fill="none" stroke="var(--border)" strokeWidth="1"/>)}
-                {[0,45,90,135].map(a => (
-                  <line key={a} x1={70+66*Math.cos(a*Math.PI/180)} y1={70+66*Math.sin(a*Math.PI/180)} x2={70-66*Math.cos(a*Math.PI/180)} y2={70-66*Math.sin(a*Math.PI/180)} stroke="var(--border)" strokeWidth="0.5"/>
-                ))}
-                {abilities.length >= 1 && (
-                  <polygon
-                    points={abilities.slice(0,8).map((ab,i) => {
-                      const angle = (i*45-90)*Math.PI/180
-                      const v = ab.format === 'decimal' ? ab.value/2*66 : (ab.value||0)/100*66
-                      return `${(70+v*Math.cos(angle)).toFixed(0)},${(70+v*Math.sin(angle)).toFixed(0)}`
-                    }).join(' ')}
-                    fill="rgba(196,138,10,0.12)" stroke="var(--gold)" strokeWidth="1.5"
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2 }}>{p.name}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{p.real_name || '暂无'}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-1)', marginTop: 'var(--space-1)', alignItems: 'center' }}>
+                {editingNick ? (
+                  <input
+                    autoFocus
+                    className="input"
+                    defaultValue={playerNicknames[p.name] ?? ''}
+                    style={{ fontSize: 12, width: 100, padding: '2px var(--space-2)' }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { savePlayerNickname(p.name, (e.target as HTMLInputElement).value); setEditingNick(false) }
+                      if (e.key === 'Escape') setEditingNick(false)
+                    }}
+                    onBlur={e => { savePlayerNickname(p.name, e.target.value); setEditingNick(false) }}
                   />
+                ) : (
+                  playerNicknames[p.name] ? (
+                    <span onClick={() => setEditingNick(true)} className="badge" style={{ background: 'rgba(255,70,85,0.15)', color: 'var(--accent-red)', cursor: 'pointer' }} title="点击编辑简称">
+                      {playerNicknames[p.name]}
+                    </span>
+                  ) : (
+                    <span onClick={() => setEditingNick(true)} style={{ cursor: 'pointer', fontSize: 11, color: 'var(--text-tertiary)', opacity: 0.5 }} title="添加简称">+ 添加简称</span>
+                  )
                 )}
-              </svg>
-              <div style={{display:'flex',flexDirection:'column',gap:3,fontSize:11,color:'var(--text-secondary)'}}>
-                {abilities.map(ab => (
-                  <div key={ab.key} style={{display:'flex',alignItems:'center',gap:6,opacity:ab.value===0&&ab.format!=='decimal'?0.4:1}}>
-                    <span style={{width:7,height:7,borderRadius:2,background:ab.value>0||ab.format==='decimal'?'var(--gold)':'var(--border)',flexShrink:0}}/>
-                    <span style={{minWidth:120}}>{ab.label_en} ({ab.label_zh})</span>
-                    <b style={{color:ab.value>0||ab.format==='decimal'?'var(--text)':'var(--text-muted)',fontFamily:'var(--font-mono)',fontSize:12}}>
-                      {ab.format==='decimal'?ab.value.toFixed(2):ab.value>0?`${ab.value}/${ab.max}`:'—'}
-                    </b>
-                  </div>
-                ))}
+                {p.country && <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>{p.country}</span>}
+                {p.age && <span className="badge" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>Age {p.age}</span>}
+                <span className="badge" style={{ background: p.team ? 'rgba(255,70,85,0.15)' : 'var(--bg-tertiary)', color: p.team ? 'var(--accent-red)' : 'var(--text-tertiary)', fontWeight: p.team ? 600 : 400 }}>
+                  {p.team || '暂无队伍'}
+                </span>
               </div>
             </div>
+          </div>
 
-            {data.summary && (
-              <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:600,color:'var(--gold)',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:10,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>
+          {top20.length > 0 && (
+            <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
+              {top20.map(([year, rank]) => (
+                <span key={year} className="badge" style={{
+                  background: rank === 1 ? 'linear-gradient(135deg, #f0c040, #c48a0a)' : rank === 2 ? '#e0e0d8' : 'rgba(255,70,85,0.12)',
+                  color: rank === 1 ? '#fff' : rank === 2 ? '#6b7280' : 'var(--accent-red)',
+                }}>{year} #{rank}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Rating 3.0 stat card */}
+          {data.rating && (
+            <div className="card stat-card" style={{ marginBottom: 'var(--space-4)' }}>
+              <div className="label">Rating 3.0</div>
+              <div className="value">{data.rating.value.toFixed(2)}</div>
+              <div className="sub">{data.rating.maps} maps</div>
+            </div>
+          )}
+
+          {/* Abilities + radar */}
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--accent-red)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--border-default)' }}>
+            能力评分 <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-tertiary)' }}>近 3 月 · {data.rating.maps} maps</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-5)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
+            <div style={{ width: 220, height: 220 }}>
+              <canvas ref={canvasRef} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', fontSize: 11, color: 'var(--text-secondary)' }}>
+              {abilities.map(ab => (
+                <div key={ab.key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', opacity: ab.value === 0 && ab.format !== 'decimal' ? 0.4 : 1 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 2, background: ab.value > 0 || ab.format === 'decimal' ? 'var(--accent-red)' : 'var(--border-default)', flexShrink: 0 }} />
+                  <span style={{ minWidth: 120 }}>{ab.label_en} ({ab.label_zh})</span>
+                  <b style={{ color: ab.value > 0 || ab.format === 'decimal' ? 'var(--text-primary)' : 'var(--text-tertiary)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                    {ab.format === 'decimal' ? ab.value.toFixed(2) : ab.value > 0 ? `${ab.value}/${ab.max}` : '—'}
+                  </b>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Career summary */}
+          {data.summary && (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--accent-red)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--border-default)' }}>
                 生涯概览
               </div>
-            )}
-
-            {data.summary && (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))',gap:6,marginBottom:14}}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
                 {data.summary.teams > 0 && <StatBadge label="效力战队" value={data.summary.teams} />}
                 {data.summary.days_in_team > 0 && <StatBadge label="当前队天数" value={data.summary.days_in_team} />}
                 {data.summary.days_in_teams > 0 && <StatBadge label="生涯总天数" value={data.summary.days_in_teams} />}
@@ -150,63 +201,63 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
                 {data.summary.major_evps > 0 && <StatBadge label="Major EVP" value={data.summary.major_evps} />}
                 {data.summary.total_evps > 0 && <StatBadge label="总 EVP" value={data.summary.total_evps} />}
               </div>
-            )}
+            </>
+          )}
 
-            {(data.career.matches ?? 0) > 0 && (
-              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:16,marginBottom:14,fontSize:13,color:'var(--text-secondary)'}}>
-                <span><span style={{fontFamily:'var(--font-display)',fontSize:20,fontWeight:700,color:'var(--text)'}}>{data.career.matches}</span> 比赛</span>
-                {data.career.win_rate && <><span style={{color:'var(--border)'}}>|</span><span style={{fontFamily:'var(--font-display)',fontSize:20,fontWeight:700,color:'var(--text)'}}>{data.career.win_rate}</span> 胜率</>}
-                {(data.career.kd ?? 0) > 0 && <><span style={{color:'var(--border)'}}>|</span><span style={{fontFamily:'var(--font-display)',fontSize:20,fontWeight:700,color:'var(--text)'}}>{data.career.kd}</span> K/D</>}
-              </div>
-            )}
+          {(data.career.matches ?? 0) > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+              <div className="card stat-card"><div className="label">比赛</div><div className="value" style={{ fontSize: 24 }}>{data.career.matches}</div></div>
+              {data.career.win_rate && <div className="card stat-card"><div className="label">胜率</div><div className="value" style={{ fontSize: 24 }}>{data.career.win_rate}</div></div>}
+              {(data.career.kd ?? 0) > 0 && <div className="card stat-card"><div className="label">K/D</div><div className="value" style={{ fontSize: 24 }}>{data.career.kd}</div></div>}
+            </div>
+          )}
 
-            {(data.career.headshot_pct || data.career.win_streak || (data.honors && data.honors.length > 0)) && (
-              <div style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'center',marginBottom:14}}>
-                {data.honors && data.honors.map(h => (
-                  <span key={h.label} style={{fontSize:11,padding:'2px 10px',borderRadius:10,background:'rgba(196,138,10,0.06)',color:'var(--gold)',fontWeight:500}}>{h.label} {h.value}×</span>
-                ))}
-                {data.career.headshot_pct && <span style={{fontSize:11,padding:'2px 10px',borderRadius:10,background:'rgba(196,138,10,0.06)',color:'var(--gold)',fontWeight:500}}>爆头率 {data.career.headshot_pct}</span>}
-                {(data.career.win_streak ?? 0) > 0 && <span style={{fontSize:11,padding:'2px 10px',borderRadius:10,background:'rgba(196,138,10,0.06)',color:'var(--gold)',fontWeight:500}}>{data.career.win_streak} 连胜</span>}
-              </div>
-            )}
+          {/* Highlights chips */}
+          {(data.career.headshot_pct || data.career.win_streak || (data.honors && data.honors.length > 0)) && (
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
+              {data.honors && data.honors.map(h => (
+                <span key={h.label} className="badge" style={{ background: 'rgba(255,70,85,0.08)', color: 'var(--accent-red)' }}>{h.label} {h.value}×</span>
+              ))}
+              {data.career.headshot_pct && <span className="badge" style={{ background: 'rgba(255,70,85,0.08)', color: 'var(--accent-red)' }}>爆头率 {data.career.headshot_pct}</span>}
+              {(data.career.win_streak ?? 0) > 0 && <span className="badge win">{data.career.win_streak} 连胜</span>}
+            </div>
+          )}
 
-            {data.recent_matches && data.recent_matches.length > 0 && (
-              <>
-                <div style={{fontFamily:'var(--font-display)',fontSize:16,fontWeight:600,color:'var(--gold)',letterSpacing:'0.06em',textTransform:'uppercase',marginBottom:10,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>近期比赛</div>
-                {data.recent_matches!.map((m,i) => (
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:i<data.recent_matches!.length-1?'1px solid rgba(0,0,0,0.04)':'none',fontSize:12}}>
-                    <span style={{minWidth:24,textAlign:'center',fontSize:10,fontWeight:700,fontFamily:'var(--font-mono)',
-                      color:m.result==='win'?'var(--green)':m.result==='loss'?'var(--red)':'var(--text-muted)',
-                      background:m.result==='win'?'rgba(0,200,83,0.1)':m.result==='loss'?'rgba(255,82,82,0.1)':'var(--input-bg)',
-                      padding:'2px 0',borderRadius:3}}>
-                      {m.result==='win'?'W':m.result==='loss'?'L':'—'}
-                    </span>
-                    <span style={{flex:1,minWidth:0}}>
-                      <span style={{fontWeight:600}}>{m.team || '待定'}</span> <span style={{color:'var(--text-muted)'}}>vs</span> {m.opponent || '待定'}
-                      <div style={{fontSize:10,color:'var(--text-muted)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{m.event}</div>
-                    </span>
-                    {m.result !== 'scheduled' && m.score && <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'var(--text-secondary)',whiteSpace:'nowrap'}}>{m.score}</span>}
-                    <span style={{fontSize:10,color:'var(--text-muted)',minWidth:52,textAlign:'right'}}>{m.date}</span>
-                  </div>
-                ))}
-              </>
-            )}
-          </>
-        )}
-      </Modal>
-    )
+          {/* Recent matches */}
+          {data.recent_matches && data.recent_matches.length > 0 && (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--accent-red)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--border-default)' }}>近期比赛</div>
+              {data.recent_matches!.map((m, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-2) 0', borderBottom: i < data.recent_matches!.length - 1 ? '1px solid var(--border-default)' : 'none', fontSize: 12 }}>
+                  <span className={`badge ${m.result === 'win' ? 'win' : m.result === 'loss' ? 'loss' : ''}`} style={{ minWidth: 24 }}>
+                    {m.result === 'win' ? 'W' : m.result === 'loss' ? 'L' : '—'}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600 }}>{m.team || '待定'}</span> <span style={{ color: 'var(--text-tertiary)' }}>vs</span> {m.opponent || '待定'}
+                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.event}</div>
+                  </span>
+                  {m.result !== 'scheduled' && m.score && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{m.score}</span>}
+                  <span style={{ fontSize: 10, color: 'var(--text-tertiary)', minWidth: 52, textAlign: 'right' }}>{m.date}</span>
+                </div>
+              ))}
+            </>
+          )}
+        </>
+      )}
+    </Modal>
+  )
 }
 
 function StatBadge({ label, value, gold }: { label: string; value: number; gold?: boolean }) {
   return (
     <div style={{
-      display:'flex',justifyContent:'space-between',alignItems:'center',
-      padding:'6px 10px',borderRadius:6,fontSize:12,
-      background: gold ? 'rgba(196,138,10,0.08)' : 'var(--input-bg)',
-      border: gold ? '1px solid rgba(196,138,10,0.2)' : '1px solid var(--border)',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', fontSize: 12,
+      background: gold ? 'rgba(255,70,85,0.08)' : 'var(--bg-tertiary)',
+      border: gold ? '1px solid rgba(255,70,85,0.2)' : '1px solid var(--border-default)',
     }}>
-      <span style={{color:'var(--text-secondary)'}}>{label}</span>
-      <span style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:14,color: gold ? 'var(--gold)' : 'var(--text)'}}>{value.toLocaleString()}</span>
+      <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: gold ? 'var(--accent-red)' : 'var(--text-primary)' }}>{value.toLocaleString()}</span>
     </div>
   )
 }

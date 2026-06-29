@@ -2,9 +2,15 @@ import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { api } from '../api/client'
 import { useTranslateConfig } from './TranslateProvider'
+import EmptyState from './EmptyState'
 
 type ArticleData = {
-  title: string; published_at: string; link: string; body_text: string; author?: string;
+  title: string; published_at: string; link: string; body_text: string; author?: string; category?: string
+}
+
+function readTime(text: string): number {
+  const words = text.split(/\s+/).filter(Boolean).length
+  return Math.max(1, Math.round(words / 200))
 }
 
 export default function NewsDetail({ url, onClose }: { url: string; onClose: () => void }) {
@@ -61,56 +67,67 @@ export default function NewsDetail({ url, onClose }: { url: string; onClose: () 
     setTranslating(false)
   }
 
+  const mins = data?.body_text ? readTime(data.body_text) : 1
+
   return (
     <Modal onClose={onClose} width={800} maxHeight="90vh">
+      {loading && <div className="spinner" />}
+      {!loading && !data && <EmptyState message="文章暂时不可用" />}
 
-        {loading && <div style={{textAlign:'center',padding:60,color:'var(--text-muted)'}}>抓取中...</div>}
-        {!loading && !data && <div style={{textAlign:'center',padding:60,color:'var(--text-muted)'}}>文章暂时不可用</div>}
+      {!loading && data && (
+        <>
+          {/* Thumbnail placeholder */}
+          <div style={{
+            height: 120, borderRadius: 'var(--radius)', marginBottom: 'var(--space-4)',
+            background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 32, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)',
+          }}>
+            {(data.category || 'NEWS').slice(0, 2).toUpperCase()}
+          </div>
 
-        {!loading && data && (
-          <>
-            <div style={{fontSize:22,fontWeight:700,color:'var(--text)',lineHeight:1.3,marginBottom:8}}>{data.title}</div>
-            <div style={{display:'flex',alignItems:'center',gap:12,fontSize:12,color:'var(--text-muted)',marginBottom:18,paddingBottom:14,borderBottom:'1px solid var(--border)'}}>
-              {data.published_at && <span>{data.published_at}</span>}
-              {data.author && <span>· {data.author}</span>}
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+            <span className="badge" style={{ background: 'rgba(255,123,0,0.15)', color: 'var(--accent-orange)' }}>
+              {data.category || '新闻'}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{mins} min 阅读</span>
+          </div>
 
-            <div style={{fontSize:14,lineHeight:1.8,color:'var(--text)',whiteSpace:'pre-wrap',marginBottom:20}}>
-              {data.body_text}
-            </div>
+          <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.3, marginBottom: 'var(--space-2)' }}>{data.title}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 'var(--space-5)', paddingBottom: 'var(--space-3)', borderBottom: '1px solid var(--border-default)' }}>
+            {data.published_at && <span>{data.published_at}</span>}
+            {data.author && <span>· {data.author}</span>}
+          </div>
 
-            {translated && (
-              <>
-                <div style={{fontFamily:'var(--font-display)',fontSize:14,fontWeight:600,color:'var(--gold)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:10,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>
-                  中文翻译
-                </div>
-                <div style={{fontSize:14,lineHeight:1.8,color:'var(--text-secondary)',whiteSpace:'pre-wrap',marginBottom:20}}>
-                  {translated}
-                </div>
-              </>
+          <div style={{ fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap', marginBottom: 'var(--space-5)' }}>
+            {data.body_text}
+          </div>
+
+          {translated && (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 600, color: 'var(--accent-red)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--border-default)' }}>
+                中文翻译
+              </div>
+              <div style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', marginBottom: 'var(--space-5)' }}>
+                {translated}
+              </div>
+            </>
+          )}
+
+          <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-default)' }}>
+            {cfg?.configured && !translated && (
+              <button onClick={doTranslate} disabled={translating} className="button primary" style={{ opacity: translating ? 0.5 : 1, cursor: translating ? 'not-allowed' : 'pointer' }}>
+                {translating ? '翻译中...' : '翻译正文'}
+              </button>
             )}
-
-            <div style={{display:'flex',gap:12,justifyContent:'center',paddingTop:14,borderTop:'1px solid var(--border)'}}>
-              {cfg?.configured && !translated && (
-                <button onClick={doTranslate} disabled={translating} style={{
-                  padding:'8px 20px',background:'var(--gold)',color:'#fff',border:'none',borderRadius:'var(--radius-sm)',
-                  fontSize:14,fontWeight:600,fontFamily:'var(--font-display)',letterSpacing:'0.04em',textTransform:'uppercase',
-                  cursor:translating?'not-allowed':'pointer',opacity:translating?0.5:1,
-                }}>
-                  {translating ? '翻译中...' : '翻译正文'}
-                </button>
-              )}
-              {data.link && (
-                <a href={data.link.startsWith('/') ? `https://www.hltv.org${data.link}` : data.link} target="_blank" rel="noopener noreferrer" style={{
-                  padding:'8px 20px',background:'var(--input-bg)',color:'var(--text-secondary)',border:'1px solid var(--border)',
-                  borderRadius:'var(--radius-sm)',fontSize:14,textDecoration:'none',
-                }}>
-                  在 HLTV 阅读原文 →
-                </a>
-              )}
-            </div>
-          </>
-        )}
+            {data.link && (
+              <a href={data.link.startsWith('/') ? `https://www.hltv.org${data.link}` : data.link} target="_blank" rel="noopener noreferrer" className="button">
+                在 HLTV 阅读原文 →
+              </a>
+            )}
+          </div>
+        </>
+      )}
     </Modal>
   )
 }
