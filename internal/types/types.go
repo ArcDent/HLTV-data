@@ -49,6 +49,17 @@ const (
 	OutcomeUnknown   MatchOutcome = "unknown"
 )
 
+// Unified error codes for upstream fetch failures. See
+// docs/superpowers/specs/2026-06-29-utls-refactor-design.md §6.
+const (
+	ErrNetwork     = "NETWORK"     // TCP/TLS dial failure — retryable
+	ErrRead        = "READ"        // Response body read failure — retryable
+	ErrChallenge   = "CHALLENGE"   // Cloudflare challenge page — retryable
+	ErrNotFound    = "NOT_FOUND"   // 403/404 — not retryable
+	ErrServer      = "SERVER"      // 5xx — retryable
+	ErrUnavailable = "UNAVAILABLE" // All retries exhausted — not retryable
+)
+
 // NormalizedMatch is a standardized match record
 type NormalizedMatch struct {
 	MatchID     int          `json:"match_id,omitempty"`
