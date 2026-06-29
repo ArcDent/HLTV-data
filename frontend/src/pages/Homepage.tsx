@@ -37,7 +37,6 @@ export default function Homepage() {
   const [events, setEvents] = useState<any[] | null>(null)
   const [news, setNews] = useState<any[] | null>(null)
   const [rankings, setRankings] = useState<Ranking[] | null>(null)
-  const [status, setStatus] = useState<any>(null)
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
 
   const fetchAll = useCallback(() => {
@@ -58,7 +57,6 @@ export default function Homepage() {
       setRankings(list.slice(0, 5))
       if (list.length > 0) saveLastRankings(list)
     }).catch(() => setRankings([]))
-    api.status().then(setStatus).catch(() => setStatus(null))
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
