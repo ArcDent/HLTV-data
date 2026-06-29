@@ -1,0 +1,149 @@
+<style>
+body { background: #0d1117; margin: 0; padding: 20px; font-family: 'Open Sans', sans-serif; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; }
+.modal { background: #161b22; border: 1px solid #30363d; border-radius: 12px; width: 900px; max-width: 95vw; max-height: 90vh; overflow: auto; }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-between; }
+.close-btn { color: #8b949e; font-size: 20px; cursor: pointer; transition: color 0.2s; }
+.close-btn:hover { color: #e6edf3; }
+.player-name { color: #e6edf3; font-family: 'Oswald', sans-serif; font-size: 24px; font-weight: 600; letter-spacing: 0.5px; }
+.player-meta { color: #8b949e; font-size: 13px; margin-top: 4px; }
+.player-meta span { margin: 0 8px; }
+.player-meta span:first-child { margin-left: 0; }
+.modal-body { padding: 24px; }
+.section { margin-bottom: 24px; }
+.section-title { color: #e6edf3; font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.stat-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+.stat-box-label { color: #8b949e; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.stat-box-value { color: #ff4655; font-size: 36px; font-weight: 700; font-family: 'Oswald', sans-serif; line-height: 1; }
+.stat-box-sub { color: #6e7681; font-size: 11px; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+.radar-placeholder { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 24px; height: 280px; display: flex; align-items: center; justify-content: center; position: relative; }
+.radar-center { color: #8b949e; font-size: 12px; text-align: center; }
+.radar-labels { position: absolute; }
+.radar-label { position: absolute; color: #8b949e; font-size: 11px; white-space: nowrap; }
+.career-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.career-stat { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px; text-align: center; }
+.career-value { color: #e6edf3; font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.career-label { color: #8b949e; font-size: 10px; text-transform: uppercase; margin-top: 4px; }
+.highlights-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.highlight-badge { background: rgba(255,123,0,0.15); color: #ff7b00; font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; }
+.match-list { display: flex; flex-direction: column; gap: 8px; }
+.match-row { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.match-result { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.match-result.win { background: rgba(63,185,80,0.2); color: #3fb950; }
+.match-result.loss { background: rgba(255,70,85,0.2); color: #ff4655; }
+.match-teams { flex: 1; color: #e6edf3; font-size: 12px; }
+.match-score { color: #ff4655; font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin: 0 12px; }
+.match-event { color: #8b949e; font-size: 11px; }
+.ability-bars { display: flex; flex-direction: column; gap: 10px; }
+.ability-row { display: flex; align-items: center; gap: 12px; }
+.ability-name { color: #8b949e; font-size: 11px; width: 70px; text-transform: uppercase; }
+.ability-bar { flex: 1; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; position: relative; }
+.ability-fill { height: 100%; background: linear-gradient(90deg, #ff4655, #ff7b00); border-radius: 4px; }
+.ability-value { color: #e6edf3; font-size: 11px; font-family: 'JetBrains Mono', monospace; width: 32px; text-align: right; }
+</style>
+
+<div class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="player-name">ZywOo</div>
+        <div class="player-meta">
+          🇫🇷 Mathieu Herbaut
+          <span>•</span>
+          24 岁
+          <span>•</span>
+          <strong style="color:#ff4655;">Vitality</strong>
+        </div>
+      </div>
+      <div class="close-btn">✕</div>
+    </div>
+
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="section">
+          <div class="section-title">综合评分</div>
+          <div class="stat-box">
+            <div class="stat-box-label">Rating 3.0</div>
+            <div class="stat-box-value">1.32</div>
+            <div class="stat-box-sub">过去 3 个月 • 47 场比赛</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">能力雷达</div>
+          <canvas id="radarChart" width="400" height="280" style="max-width:100%;"></canvas>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">职业生涯统计</div>
+        <div class="career-grid">
+          <div class="career-stat">
+            <div class="career-value">1,234</div>
+            <div class="career-label">总比赛</div>
+          </div>
+          <div class="career-stat">
+            <div class="career-value">1.25</div>
+            <div class="career-label">K/D 比</div>
+          </div>
+          <div class="career-stat">
+            <div class="career-value">58.3%</div>
+            <div class="career-label">胜率</div>
+          </div>
+          <div class="career-stat">
+            <div class="career-value">52.1%</div>
+            <div class="career-label">爆头率</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">荣誉成就</div>
+        <div class="highlights-list">
+          <div class="highlight-badge">🏆 IEM Katowice 2024 MVP</div>
+          <div class="highlight-badge">🏆 BLAST Fall Final 2023 MVP</div>
+          <div class="highlight-badge">🥇 ESL Pro League S18 冠军</div>
+          <div class="highlight-badge">⭐ HLTV 年度 #1 (2023)</div>
+          <div class="highlight-badge">⭐ HLTV 年度 #1 (2022)</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">近期比赛</div>
+        <div class="match-list">
+          <div class="match-row">
+            <div class="match-result win">✓</div>
+            <div class="match-teams">Vitality vs Spirit</div>
+            <div class="match-score">2 : 1</div>
+            <div class="match-event">IEM Katowice 2025</div>
+          </div>
+          <div class="match-row">
+            <div class="match-result loss">✕</div>
+            <div class="match-teams">Vitality vs FaZe</div>
+            <div class="match-score">0 : 2</div>
+            <div class="match-event">BLAST Spring Final</div>
+          </div>
+          <div class="match-row">
+            <div class="match-result win">✓</div>
+            <div class="match-teams">Vitality vs G2</div>
+            <div class="match-score">2 : 0</div>
+            <div class="match-event">ESL Pro League S19</div>
+          </div>
+          <div class="match-row">
+            <div class="match-result win">✓</div>
+            <div class="match-teams">Vitality vs Navi</div>
+            <div class="match-score">2 : 1</div>
+            <div class="match-event">IEM Dallas 2025</div>
+          </div>
+          <div class="match-row">
+            <div class="match-result win">✓</div>
+            <div class="match-teams">Vitality vs Heroic</div>
+            <div class="match-score">16 : 12</div>
+            <div class="match-event">BLAST Spring Groups</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,127 @@
+<h2>视觉风格方向</h2>
+<p class="subtitle">选择一个整体风格方向，后续所有页面设计以此为基础</p>
+
+<div class="cards">
+  <!-- Option A: Esports Dark -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:20px;border-radius:8px 8px 0 0;">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#ff4655,#ff7b00);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px;">H</div>
+        <span style="color:#e6edf3;font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;letter-spacing:1px;">HLTV DATA</span>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <span style="color:#ff4655;font-size:11px;font-weight:600;background:rgba(255,70,85,0.15);padding:2px 8px;border-radius:4px;">LIVE</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:12px;">
+          <div style="color:#8b949e;font-size:10px;text-transform:uppercase;letter-spacing:1px;">今日赛程</div>
+          <div style="color:#ff4655;font-size:24px;font-weight:700;font-family:'Oswald',sans-serif;">12</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:12px;">
+          <div style="color:#8b949e;font-size:10px;text-transform:uppercase;letter-spacing:1px;">热门新闻</div>
+          <div style="color:#ff7b00;font-size:24px;font-weight:700;font-family:'Oswald',sans-serif;">8</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:24px;height:24px;background:#30363d;border-radius:50%;"></div>
+          <span style="color:#e6edf3;font-size:12px;font-weight:500;">Vitality</span>
+        </div>
+        <span style="color:#ff4655;font-size:13px;font-weight:700;">2 : 1</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="color:#e6edf3;font-size:12px;font-weight:500;">Spirit</span>
+          <div style="width:24px;height:24px;background:#30363d;border-radius:50%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 电竞暗黑 (Esports Dark)</h3>
+      <p>深色背景 + 红/橙强调色，GitHub Dark 风格的卡片边框。硬朗、竞技感强。参考 HLTV/Valorant 官网的视觉语言。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>电竞氛围强烈</li><li>高对比度易读</li><li>深色模式天然护眼</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>风格较重，不适合长时间阅读</li><li>色彩层级需要精心控制</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Clean Modern -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fb;padding:20px;border-radius:8px 8px 0 0;">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px;">H</div>
+        <span style="color:#1a1a2e;font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;letter-spacing:1px;">HLTV DATA</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <div style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:1px;">今日赛程</div>
+          <div style="color:#2563eb;font-size:24px;font-weight:700;font-family:'Oswald',sans-serif;">12</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <div style="color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:1px;">热门新闻</div>
+          <div style="color:#7c3aed;font-size:24px;font-weight:700;font-family:'Oswald',sans-serif;">8</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:24px;height:24px;background:#e5e7eb;border-radius:50%;"></div>
+          <span style="color:#1a1a2e;font-size:12px;font-weight:500;">Vitality</span>
+        </div>
+        <span style="color:#2563eb;font-size:13px;font-weight:700;">2 : 1</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="color:#1a1a2e;font-size:12px;font-weight:500;">Spirit</span>
+          <div style="width:24px;height:24px;background:#e5e7eb;border-radius:50%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 现代简洁 (Clean Modern)</h3>
+      <p>亮色为主 + 蓝/紫强调色，圆角卡片、柔和阴影。Linear/Vercel 风格的 SaaS 美学，专业但不花哨。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>清爽专业，适合长时间使用</li><li>信息层级天然清晰</li><li>容易实现亮/暗双主题</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>电竞氛围偏弱</li><li>与 HLTV 品牌调性距离较远</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C: Premium Gold -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0f;padding:20px;border-radius:8px 8px 0 0;">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#c48a0a,#f5c842);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#0a0a0f;font-size:14px;">H</div>
+        <span style="color:#e4e4ec;font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;letter-spacing:1px;">HLTV DATA</span>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <span style="color:#f5c842;font-size:11px;font-weight:600;background:rgba(245,200,66,0.12);padding:2px 8px;border-radius:4px;">LIVE</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:#14141c;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;">
+          <div style="color:#888;font-size:10px;text-transform:uppercase;letter-spacing:1px;">今日赛程</div>
+          <div style="color:#f5c842;font-size:24px;font-weight:700;font-family:'Oswald',sans-serif;">12</div>
+        </div>
+        <div style="background:#14141c;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:12px;">
+          <div style="color:#888;font-size:10px;text-transform:uppercase;letter-spacing:1px;">热门新闻</div>
+          <div style="color:#c48a0a;font-size:24px;font-weight:700;font-family:'Oswald',sans-serif;">8</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:#14141c;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:24px;height:24px;background:#2a2a35;border-radius:50%;"></div>
+          <span style="color:#e4e4ec;font-size:12px;font-weight:500;">Vitality</span>
+        </div>
+        <span style="color:#f5c842;font-size:13px;font-weight:700;">2 : 1</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="color:#e4e4ec;font-size:12px;font-weight:500;">Spirit</span>
+          <div style="width:24px;height:24px;background:#2a2a35;border-radius:50%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 尊享金 (Premium Gold)</h3>
+      <p>延续当前项目的金色调性，深色背景 + 金色强调色。沉稳奢华感，类似高端体育数据平台。保留现有设计资产。</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>与现有代码库风格连续</li><li>迁移成本最低</li><li>独特辨识度高</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>金色需精心控制避免庸俗</li><li>亮色模式下金色对比度挑战大</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

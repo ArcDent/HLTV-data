@@ -1,0 +1,172 @@
+<style>
+body { background: #0d1117; margin: 0; padding: 20px; font-family: 'Open Sans', sans-serif; }
+.page { max-width: 1200px; margin: 0 auto; }
+.topbar { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 20px; display: flex; align-items: center; gap: 16px; border-radius: 8px 8px 0 0; }
+.logo { width: 32px; height: 32px; background: linear-gradient(135deg, #ff4655, #ff7b00); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 14px; }
+.brand { color: #e6edf3; font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 1px; }
+.search { margin-left: auto; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 6px 12px; color: #8b949e; font-size: 11px; width: 180px; }
+.live-badge { color: #ff4655; font-size: 10px; font-weight: 600; background: rgba(255,70,85,0.15); padding: 3px 8px; border-radius: 4px; }
+.subnav { background: #0d1117; border-bottom: 1px solid #21262d; padding: 0 20px; display: flex; gap: 0; }
+.subnav-item { color: #8b949e; font-size: 12px; padding: 10px 14px; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.subnav-item.active { color: #e6edf3; border-bottom-color: #ff4655; }
+.content { padding: 24px; background: #0d1117; }
+h2 { color: #e6edf3; font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: 0.5px; margin: 0 0 16px 0; text-transform: uppercase; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; transition: border-color 0.2s; }
+.stat-card:hover { border-color: #ff4655; }
+.stat-label { color: #8b949e; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.stat-value { color: #ff4655; font-size: 32px; font-weight: 700; font-family: 'Oswald', sans-serif; line-height: 1; }
+.matches-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.match-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; transition: border-color 0.2s; cursor: pointer; }
+.match-card:hover { border-color: #ff4655; }
+.match-event { color: #8b949e; font-size: 10px; text-transform: uppercase; margin-bottom: 8px; }
+.match-teams { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.team-name { color: #e6edf3; font-size: 13px; font-weight: 500; }
+.match-score { color: #ff4655; font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.match-time { color: #6e7681; font-size: 10px; }
+.news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.news-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; transition: border-color 0.2s; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; }
+.news-card:hover { border-color: #ff7b00; }
+.news-badge { display: inline-block; background: rgba(255,123,0,0.15); color: #ff7b00; font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; margin-bottom: 8px; }
+.news-title { color: #e6edf3; font-size: 13px; font-weight: 500; line-height: 1.4; flex: 1; }
+.news-time { color: #6e7681; font-size: 10px; margin-top: 8px; }
+.rankings-list { display: flex; flex-direction: column; gap: 8px; }
+.ranking-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: border-color 0.2s; }
+.ranking-item:hover { border-color: #ff4655; }
+.ranking-pos { color: #e6edf3; font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; width: 28px; }
+.ranking-flag { width: 20px; height: 14px; background: #30363d; border-radius: 2px; }
+.ranking-name { color: #e6edf3; font-size: 13px; font-weight: 500; flex: 1; }
+.ranking-change { font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+.ranking-change.up { color: #3fb950; }
+.ranking-change.down { color: #ff4655; }
+</style>
+
+<div class="page">
+  <div class="topbar">
+    <div class="logo">H</div>
+    <div class="brand">HLTV DATA</div>
+    <div class="search">搜索队伍、选手...</div>
+    <div class="live-badge">● LIVE</div>
+  </div>
+
+  <div class="subnav">
+    <a href="#" class="subnav-item active">首页</a>
+    <a href="#" class="subnav-item">赛程</a>
+    <a href="#" class="subnav-item">队伍</a>
+    <a href="#" class="subnav-item">选手</a>
+    <a href="#" class="subnav-item">新闻</a>
+  </div>
+
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">今日赛程</div>
+        <div class="stat-value">12</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">进行中</div>
+        <div class="stat-value">3</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">热门新闻</div>
+        <div class="stat-value">8</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">排名变动</div>
+        <div class="stat-value">5</div>
+      </div>
+    </div>
+
+    <h2>今日焦点赛事</h2>
+    <div class="matches-grid">
+      <div class="match-card">
+        <div class="match-event">IEM Katowice 2025 • BO3</div>
+        <div class="match-teams">
+          <span class="team-name">Vitality</span>
+          <span class="match-score">2 : 1</span>
+          <span class="team-name">Spirit</span>
+        </div>
+        <div class="match-time">已结束 • 2小时前</div>
+      </div>
+
+      <div class="match-card">
+        <div class="match-event">ESL Pro League • BO3</div>
+        <div class="match-teams">
+          <span class="team-name">FaZe</span>
+          <span class="match-score">LIVE</span>
+          <span class="team-name">G2</span>
+        </div>
+        <div class="match-time">进行中 • 1-1</div>
+      </div>
+
+      <div class="match-card">
+        <div class="match-event">BLAST Spring Final • BO5</div>
+        <div class="match-teams">
+          <span class="team-name">Navi</span>
+          <span class="match-score">18:00</span>
+          <span class="team-name">Heroic</span>
+        </div>
+        <div class="match-time">即将开始 • 3小时后</div>
+      </div>
+    </div>
+
+    <h2>热门新闻</h2>
+    <div class="news-grid">
+      <div class="news-card">
+        <div class="news-badge">赛事</div>
+        <div class="news-title">IEM Katowice 2025: Vitality 击败 Spirit 晋级决赛</div>
+        <div class="news-time">2小时前</div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-badge">转会</div>
+        <div class="news-title">s1mple 宣布加入 Falcons，签约两年</div>
+        <div class="news-time">5小时前</div>
+      </div>
+
+      <div class="news-card">
+        <div class="news-badge">排名</div>
+        <div class="news-title">HLTV 世界排名更新：Spirit 重返榜首</div>
+        <div class="news-time">1天前</div>
+      </div>
+    </div>
+
+    <h2>排名变动 Top 5</h2>
+    <div class="rankings-list">
+      <div class="ranking-item">
+        <div class="ranking-pos">#1</div>
+        <div class="ranking-flag"></div>
+        <div class="ranking-name">Spirit</div>
+        <div class="ranking-change up">↑ 2</div>
+      </div>
+
+      <div class="ranking-item">
+        <div class="ranking-pos">#2</div>
+        <div class="ranking-flag"></div>
+        <div class="ranking-name">FaZe Clan</div>
+        <div class="ranking-change down">↓ 1</div>
+      </div>
+
+      <div class="ranking-item">
+        <div class="ranking-pos">#3</div>
+        <div class="ranking-flag"></div>
+        <div class="ranking-name">Vitality</div>
+        <div class="ranking-change up">↑ 1</div>
+      </div>
+
+      <div class="ranking-item">
+        <div class="ranking-pos">#4</div>
+        <div class="ranking-flag"></div>
+        <div class="ranking-name">G2 Esports</div>
+        <div class="ranking-change down">↓ 2</div>
+      </div>
+
+      <div class="ranking-item">
+        <div class="ranking-pos">#5</div>
+        <div class="ranking-flag"></div>
+        <div class="ranking-name">Natus Vincere</div>
+        <div class="ranking-change up">↑ 1</div>
+      </div>
+    </div>
+  </div>
+</div>

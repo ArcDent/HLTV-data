@@ -1,0 +1,125 @@
+<h2>导航布局方案</h2>
+<p class="subtitle">基于电竞暗黑风格，选择整体页面布局结构</p>
+
+<div class="cards">
+  <!-- Option A: Top Nav -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:0;border-radius:8px 8px 0 0;overflow:hidden;">
+      <!-- Top navbar -->
+      <div style="background:#161b22;border-bottom:1px solid #30363d;padding:10px 16px;display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#ff4655,#ff7b00);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:11px;">H</div>
+          <span style="color:#e6edf3;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;">HLTV DATA</span>
+        </div>
+        <div style="display:flex;gap:4px;margin-left:12px;">
+          <span style="color:#e6edf3;font-size:11px;padding:4px 10px;background:rgba(255,70,85,0.15);border-radius:4px;border-bottom:2px solid #ff4655;">首页</span>
+          <span style="color:#8b949e;font-size:11px;padding:4px 10px;">赛程</span>
+          <span style="color:#8b949e;font-size:11px;padding:4px 10px;">队伍</span>
+          <span style="color:#8b949e;font-size:11px;padding:4px 10px;">选手</span>
+          <span style="color:#8b949e;font-size:11px;padding:4px 10px;">新闻</span>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+          <div style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:3px 10px;color:#8b949e;font-size:10px;">搜索...</div>
+          <div style="width:24px;height:24px;background:#21262d;border-radius:50%;border:1px solid #30363d;"></div>
+        </div>
+      </div>
+      <!-- Content area -->
+      <div style="padding:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+        </div>
+        <div style="margin-top:8px;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:60px;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 顶部导航栏</h3>
+      <p>水平导航 + 全局搜索栏。内容区占满全宽，信息密度高。移动端可收缩为汉堡菜单。参考 HLTV 官网布局。</p>
+    </div>
+  </div>
+
+  <!-- Option B: Sidebar Slim -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:0;border-radius:8px 8px 0 0;overflow:hidden;display:flex;">
+      <!-- Slim sidebar -->
+      <div style="width:56px;background:#161b22;border-right:1px solid #30363d;padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+        <div style="width:28px;height:28px;background:linear-gradient(135deg,#ff4655,#ff7b00);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:11px;margin-bottom:8px;">H</div>
+        <div style="width:32px;height:32px;background:rgba(255,70,85,0.15);border-radius:6px;border-left:2px solid #ff4655;display:flex;align-items:center;justify-content:center;">
+          <div style="width:14px;height:14px;background:#ff4655;border-radius:3px;opacity:0.8;"></div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:14px;height:14px;background:#8b949e;border-radius:3px;opacity:0.4;"></div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:14px;height:14px;background:#8b949e;border-radius:3px;opacity:0.4;"></div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:14px;height:14px;background:#8b949e;border-radius:3px;opacity:0.4;"></div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+          <div style="width:14px;height:14px;background:#8b949e;border-radius:3px;opacity:0.4;"></div>
+        </div>
+        <div style="margin-top:auto;">
+          <div style="width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+            <div style="width:14px;height:14px;background:#8b949e;border-radius:50%;opacity:0.4;"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Content area -->
+      <div style="flex:1;padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="color:#e6edf3;font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;">首页</span>
+          <div style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:3px 10px;color:#8b949e;font-size:10px;">搜索...</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+        </div>
+        <div style="margin-top:8px;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:60px;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 窄侧边栏 (Icon Only)</h3>
+      <p>56px 图标导航栏，hover 展开文字。最大化内容区宽度，现代 app 感。参考 Discord/Figma 布局。</p>
+    </div>
+  </div>
+
+  <!-- Option C: Top + Sub -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:0;border-radius:8px 8px 0 0;overflow:hidden;">
+      <!-- Top bar -->
+      <div style="background:#161b22;border-bottom:1px solid #30363d;padding:8px 16px;display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#ff4655,#ff7b00);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:11px;">H</div>
+          <span style="color:#e6edf3;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;">HLTV DATA</span>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+          <div style="background:#21262d;border:1px solid #30363d;border-radius:6px;padding:3px 10px;color:#8b949e;font-size:10px;width:140px;">搜索队伍、选手...</div>
+          <span style="color:#ff4655;font-size:10px;font-weight:600;background:rgba(255,70,85,0.15);padding:2px 6px;border-radius:4px;">● LIVE</span>
+        </div>
+      </div>
+      <!-- Sub nav -->
+      <div style="background:#0d1117;border-bottom:1px solid #21262d;padding:0 16px;display:flex;gap:0;">
+        <span style="color:#e6edf3;font-size:11px;padding:8px 12px;border-bottom:2px solid #ff4655;font-weight:500;">首页</span>
+        <span style="color:#8b949e;font-size:11px;padding:8px 12px;">赛程</span>
+        <span style="color:#8b949e;font-size:11px;padding:8px 12px;">队伍</span>
+        <span style="color:#8b949e;font-size:11px;padding:8px 12px;">选手</span>
+        <span style="color:#8b949e;font-size:11px;padding:8px 12px;">新闻</span>
+      </div>
+      <!-- Content -->
+      <div style="padding:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+          <div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+        </div>
+        <div style="margin-top:8px;background:#161b22;border:1px solid #30363d;border-radius:6px;padding:10px;height:50px;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 顶栏 + 二级导航</h3>
+      <p>品牌栏 + 搜索在顶部，页面导航在第二行。两层分离更清晰，内容区全宽。响应式友好。参考 GitHub 布局。</p>
+    </div>
+  </div>
+</div>

@@ -13,7 +13,7 @@ func (h *Handlers) Status(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&m)
 	endpoints := []map[string]any{
 		{"name": "/results", "method": "HTTP", "ok": true},
-		{"name": "/matches", "method": "HTTP+Firecrawl", "ok": true},
+		{"name": "/matches", "method": "HTTP", "ok": true},
 		{"name": "team search", "method": "HTTP", "ok": true},
 		{"name": "player search", "method": "HTTP", "ok": true},
 		{"name": "news archive", "method": "HTTP", "ok": true},

@@ -23,6 +23,5 @@ COPY --from=builder /app/hltv-mcp /hltv-mcp
 EXPOSE 8082
 ENV HTTP_PORT=8082
 ENV HTTP_HOST=0.0.0.0
-ENV FIRECRAWL_API_KEY=
 VOLUME ["/data"]
 ENTRYPOINT ["/hltv-mcp"]
