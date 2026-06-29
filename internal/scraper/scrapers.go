@@ -75,10 +75,7 @@ func NewMatchesScraper(cli *client.HltvClient) *MatchesScraper { return &Matches
 func (s *MatchesScraper) GetUpcoming(ctx context.Context) (*goquery.Document, error) {
 	body, err := s.cli.FetchHTML(ctx, "/matches", "matches_upcoming")
 	if err != nil {
-		body, err = s.cli.FetchViaFirecrawl(ctx, "/matches")
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 	return goquery.NewDocumentFromReader(bytes.NewReader(body))
 }
