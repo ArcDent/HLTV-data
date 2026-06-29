@@ -25,4 +25,7 @@ export const api = {
     request<any>(`/news?${new URLSearchParams(params)}`),
   getNewsArticle: (url: string) =>
     request<any>(`/news/article?url=${encodeURIComponent(url)}`),
+  getRankings: () => request<any>('/rankings'),
+  compareTeams: (a: number, b: number) =>
+    request<any>(`/teams/compare?a=${a}&b=${b}`),
 }
