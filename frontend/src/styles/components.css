@@ -115,3 +115,9 @@
 @media (max-width: 768px) {
   .modal-fullscreen { width: 100vw !important; height: 100vh !important; max-height: 100vh !important; max-width: 100vw !important; border-radius: 0 !important; }
 }
+
+/* Tablet: relax content padding */
+@media (max-width: 1024px) {
+  .content { padding: var(--space-4) var(--space-4); }
+}
+
