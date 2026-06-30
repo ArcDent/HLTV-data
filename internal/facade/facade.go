@@ -60,7 +60,6 @@ func (f *HltvFacade) createMeta(ttlSec int) types.ToolMeta {
 		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
 		Timezone:      "Asia/Shanghai",
 		TTLSec:        ttlSec,
-		SchemaVersion: "1.0",
 	}
 }
 
@@ -194,7 +193,7 @@ func (f *HltvFacade) GetTeamDetailCached(ctx context.Context, id int, slug strin
 	if err != nil {
 		return types.TeamDetail{}, err
 	}
-	f.cache.Set(key, td, f.cfg.CacheTTLPlayerDetail)
+	f.cache.Set(key, td, f.cfg.CacheTTLTeam)
 	return td, nil
 }
 
@@ -246,7 +245,7 @@ func (f *HltvFacade) refreshTeam(id int, slug, key string) {
 		log.Printf("facade: refresh team %d: %v", id, err)
 		return
 	}
-	f.cache.Set(key, td, f.cfg.CacheTTLPlayerDetail)
+	f.cache.Set(key, td, f.cfg.CacheTTLTeam)
 	f.broadcast("team", td.Profile.ID, td.Profile.Name)
 }
 
@@ -346,7 +345,9 @@ func (f *HltvFacade) GetRankings(ctx context.Context) ([]types.TeamRankingRow, e
 }
 
 // CompareTeams returns side-by-side detail for two teams plus head-to-head
-// data if any shared recent matches exist. Reuses GetTeamDetailCached (Type A).
+// data. The H2H source is /results?team={aID}&team={bID} (HLTV OR filter),
+// client-side filtered to direct A-vs-B encounters. When the /results fetch
+// fails, HeadToHead is left nil and the frontend renders an empty H2H state.
 func (f *HltvFacade) CompareTeams(ctx context.Context, aID, bID int) (*types.TeamComparison, error) {
 	a, err := f.GetTeamDetailCached(ctx, aID, "")
 	if err != nil {
@@ -356,42 +357,110 @@ func (f *HltvFacade) CompareTeams(ctx context.Context, aID, bID int) (*types.Tea
 	if err != nil {
 		return nil, err
 	}
-	return buildComparison(&a, &b), nil
+
+	cmp := buildComparison(&a, &b)
+
+	// Primary H2H source: /results?team=a&team=b (direct encounter history).
+	aName, bName := a.Profile.Name, b.Profile.Name
+	if aName != "" && bName != "" {
+		if doc, err := f.rs.GetResultsByTeams(ctx, aID, bID); err == nil {
+			all := normalizer.NormalizeMatches(doc, "")
+			var direct []types.NormalizedMatch
+			for _, m := range all {
+				if isDirectH2H(m, aName, bName) {
+					direct = append(direct, m)
+				}
+			}
+			if h2h := buildHeadToHead(direct, aName, bName); h2h != nil {
+				cmp.HeadToHead = h2h
+			}
+		} else {
+			log.Printf("facade: CompareTeams GetResultsByTeams %d vs %d: %v", aID, bID, err)
+		}
+	}
+
+	return cmp, nil
 }
 
-// buildComparison maps two TeamDetail structs into a TeamComparison. For
-// HeadToHead: intersect the two teams' recent-match opponent lists; if no
-// overlap, leave HeadToHead nil. Does NOT fabricate H2H data.
-func buildComparison(a, b *types.TeamDetail) *types.TeamComparison {
-	// Head-to-head: count recent matches where one team's opponent is the other.
+// isDirectH2H returns true when the match is between teamA and teamB
+// (either order).
+func isDirectH2H(m types.NormalizedMatch, aName, bName string) bool {
+	return (m.Team1 == aName && m.Team2 == bName) ||
+		(m.Team1 == bName && m.Team2 == aName)
+}
+
+// buildHeadToHead computes head-to-head stats from a slice of direct A-vs-B
+// matches. m.Result is interpreted from team1's perspective (team1 won →
+// OutcomeWin), so we map winsA/winsB by checking which side team1 is. Dedups
+// by MatchID (or a team/date/score tuple fallback). Returns nil if matches is
+// empty.
+func buildHeadToHead(matches []types.NormalizedMatch, aName, bName string) *types.HeadToHead {
+	type dedupKey struct {
+		team1, team2, date, score string
+	}
+	seenByMatchID := make(map[int]bool)
+	seenByTuple := make(map[dedupKey]bool)
+
 	var winsA, winsB int
 	var recent []bool
-	aName := a.Profile.Name
-	bName := b.Profile.Name
-	for _, m := range a.RecentMatches {
-		opp := m.Opponent
-		if opp == "" {
-			opp = m.Team2
-		}
-		if opp == bName || (m.Team1 == aName && m.Team2 == bName) || (m.Team2 == aName && m.Team1 == bName) {
-			recent = append(recent, m.Result == types.OutcomeWin)
-			if m.Result == types.OutcomeWin {
-				winsA++
-			} else if m.Result == types.OutcomeLoss {
-				winsB++
+	total := 0
+
+	for _, m := range matches {
+		// Deduplicate: prefer MatchID when non-zero; otherwise tuple fallback.
+		if m.MatchID > 0 {
+			if seenByMatchID[m.MatchID] {
+				continue
 			}
+			seenByMatchID[m.MatchID] = true
+		} else {
+			date := m.ScheduledAt
+			if date == "" {
+				date = m.PlayedAt
+			}
+			t1, t2 := m.Team1, m.Team2
+			if t1 > t2 {
+				t1, t2 = t2, t1
+			}
+			key := dedupKey{team1: t1, team2: t2, date: date, score: m.Score}
+			if seenByTuple[key] {
+				continue
+			}
+			seenByTuple[key] = true
 		}
-	}
-	cmp := &types.TeamComparison{TeamA: *a, TeamB: *b}
-	if len(recent) > 0 {
-		cmp.HeadToHead = &types.HeadToHead{
-			TotalMatches:  len(recent),
-			WinsA:         winsA,
-			WinsB:         winsB,
-			RecentResults: recent,
+
+		total++
+		// m.Result is from team1's perspective. If team1 == aName, A won on
+		// OutcomeWin; if team1 == bName, B won on OutcomeWin (A lost).
+		aWon := (m.Team1 == aName && m.Result == types.OutcomeWin) ||
+			(m.Team1 == bName && m.Result == types.OutcomeLoss)
+		bWon := (m.Team1 == bName && m.Result == types.OutcomeWin) ||
+			(m.Team1 == aName && m.Result == types.OutcomeLoss)
+		if aWon {
+			winsA++
+		} else if bWon {
+			winsB++
 		}
+		recent = append(recent, aWon)
 	}
-	return cmp
+
+	if total == 0 {
+		return nil
+	}
+	return &types.HeadToHead{
+		TotalMatches:  total,
+		WinsA:         winsA,
+		WinsB:         winsB,
+		RecentResults: recent,
+	}
+}
+
+// buildComparison assembles two TeamDetail structs into a TeamComparison.
+// HeadToHead is populated separately by CompareTeams via buildHeadToHead
+// (the /results?team=a&team=b source). The teams' RecentMatches lists hold
+// upcoming fixtures, not historical encounters, so they are not a usable H2H
+// source and are not scanned here.
+func buildComparison(a, b *types.TeamDetail) *types.TeamComparison {
+	return &types.TeamComparison{TeamA: *a, TeamB: *b}
 }
 
 // CacheEntries returns the number of entries currently in the cache
@@ -406,9 +475,10 @@ func (f *HltvFacade) CacheMisses() int64 { return f.cache.Misses() }
 // ClearCache clears all cached entries and resets counters
 func (f *HltvFacade) ClearCache() { f.cache.Clear() }
 
-// translateNewTitles translates titles for archive news items that don't yet
-// have a translation stored, then pushes an SSE notification.
-func (f *HltvFacade) translateNewTitles(items []types.NewsItem) {
+// translateTitles translates titles for items lacking a stored zh
+// translation, then pushes an SSE notification. Generic over item type so
+// archive and realtime news lists share one implementation.
+func translateTitles[T any](f *HltvFacade, items []T, extract func(T) (string, string), has func(string) (bool, error), update func(string, string) error) {
 	if f.translateCfgFn == nil || f.store == nil {
 		return
 	}
@@ -423,18 +493,19 @@ func (f *HltvFacade) translateNewTitles(items []types.NewsItem) {
 
 	translated := 0
 	for _, item := range items {
-		if item.Title == "" || item.Link == "" {
+		title, link := extract(item)
+		if title == "" || link == "" {
 			continue
 		}
-		if has, _ := f.store.HasNewsTitleZh(item.Link); has {
+		if has, _ := has(link); has {
 			continue
 		}
-		zh, err := t.TranslateTitle(ctx, item.Title)
+		zh, err := t.TranslateTitle(ctx, title)
 		if err != nil {
-			log.Printf("facade: translate title %q: %v", item.Title, err)
+			log.Printf("facade: translate title %q: %v", title, err)
 			continue
 		}
-		if err := f.store.UpdateNewsTitleZh(item.Link, zh); err != nil {
+		if err := update(link, zh); err != nil {
 			log.Printf("facade: store title_zh: %v", err)
 			continue
 		}
@@ -445,40 +516,10 @@ func (f *HltvFacade) translateNewTitles(items []types.NewsItem) {
 	}
 }
 
-// translateNewRealtimeTitles translates titles for realtime news items.
-func (f *HltvFacade) translateNewRealtimeTitles(items []types.RealtimeNewsItem) {
-	if f.translateCfgFn == nil || f.store == nil {
-		return
-	}
-	cfg, err := f.translateCfgFn()
-	if err != nil {
-		log.Printf("facade: translate config: %v", err)
-		return
-	}
-	t := translator.New(cfg)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+func (f *HltvFacade) translateNewTitles(items []types.NewsItem) {
+	translateTitles(f, items, func(i types.NewsItem) (string, string) { return i.Title, i.Link }, f.store.HasNewsTitleZh, f.store.UpdateNewsTitleZh)
+}
 
-	translated := 0
-	for _, item := range items {
-		if item.Title == "" || item.Link == "" {
-			continue
-		}
-		if has, _ := f.store.HasRealtimeTitleZh(item.Link); has {
-			continue
-		}
-		zh, err := t.TranslateTitle(ctx, item.Title)
-		if err != nil {
-			log.Printf("facade: translate realtime title %q: %v", item.Title, err)
-			continue
-		}
-		if err := f.store.UpdateRealtimeTitleZh(item.Link, zh); err != nil {
-			log.Printf("facade: store realtime title_zh: %v", err)
-			continue
-		}
-		translated++
-	}
-	if translated > 0 {
-		f.broadcast("news", 0, "")
-	}
+func (f *HltvFacade) translateNewRealtimeTitles(items []types.RealtimeNewsItem) {
+	translateTitles(f, items, func(i types.RealtimeNewsItem) (string, string) { return i.Title, i.Link }, f.store.HasRealtimeTitleZh, f.store.UpdateRealtimeTitleZh)
 }

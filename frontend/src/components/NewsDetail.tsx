@@ -76,16 +76,6 @@ export default function NewsDetail({ url, onClose }: { url: string; onClose: () 
 
       {!loading && data && (
         <>
-          {/* Thumbnail placeholder */}
-          <div style={{
-            height: 120, borderRadius: 'var(--radius)', marginBottom: 'var(--space-4)',
-            background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 32, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)',
-          }}>
-            {(data.category || 'NEWS').slice(0, 2).toUpperCase()}
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
             <span className="badge" style={{ background: 'rgba(255,123,0,0.15)', color: 'var(--accent-orange)' }}>
               {data.category || '新闻'}

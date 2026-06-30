@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import EmptyState from '../components/EmptyState'
 import Modal from '../components/Modal'
+import NewsDetail from '../components/NewsDetail'
 
 type Ranking = { rank: number; teamId: number; name: string; country?: string; points?: string }
 
@@ -38,6 +39,7 @@ export default function Homepage() {
   const [news, setNews] = useState<any[] | null>(null)
   const [rankings, setRankings] = useState<Ranking[] | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [selectedNews, setSelectedNews] = useState<{ url: string } | null>(null)
 
   const fetchAll = useCallback(() => {
     api.getEvents('today', 3).then(d => {
@@ -53,7 +55,7 @@ export default function Homepage() {
     }).catch(() => setEvents([]))
     api.realtimeNews(3).then(d => setNews(d?.items ?? [])).catch(() => setNews([]))
     api.getRankings().then(d => {
-      const list: Ranking[] = d?.items ?? d ?? []
+      const list: Ranking[] = d?.data ?? []
       setRankings(list.slice(0, 5))
       if (list.length > 0) saveLastRankings(list)
     }).catch(() => setRankings([]))
@@ -146,7 +148,12 @@ export default function Homepage() {
           ) : (
             <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
               {news.map((n: any, i: number) => (
-                <div key={i} className="card hoverable" style={{ cursor: 'pointer', minHeight: 80, display: 'flex', flexDirection: 'column' }}>
+                <div
+                  key={i}
+                  className="card hoverable"
+                  style={{ cursor: n.link ? 'pointer' : 'default', minHeight: 80, display: 'flex', flexDirection: 'column' }}
+                  onClick={() => n.link && setSelectedNews({ url: n.link })}
+                >
                   <span className="badge" style={{ background: 'rgba(255,123,0,0.15)', color: 'var(--accent-orange)', alignSelf: 'flex-start', marginBottom: 'var(--space-2)' }}>
                     {n.category || '新闻'}
                   </span>
@@ -196,6 +203,8 @@ export default function Homepage() {
           {selectedEvent.best_of && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{selectedEvent.best_of.toUpperCase()}</div>}
         </Modal>
       )}
+
+      {selectedNews && <NewsDetail url={selectedNews.url} onClose={() => setSelectedNews(null)} />}
     </div>
   )
 }

@@ -281,7 +281,7 @@ func (f *HltvFacade) GetResultsRecent(query types.ResultsRecentQuery) *types.Too
 }
 
 func filterToday(matches []types.NormalizedMatch) []types.NormalizedMatch {
-	today := time.Now().Format("2006-01-02")
+	today := time.Now().In(normalizer.AsiaShanghai()).Format("2006-01-02")
 	var result []types.NormalizedMatch
 	for _, m := range matches {
 		if strings.HasPrefix(m.ScheduledAt, today) {

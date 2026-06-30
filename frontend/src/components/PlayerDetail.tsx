@@ -17,6 +17,8 @@ type PlayerData = {
   recent_matches?: { date: string; team: string; opponent: string; score: string; result: string; rating: number; kills: number; deaths: number; event: string }[]
 }
 
+type Ability = PlayerData['abilities'][number]
+
 export default function PlayerDetail({ id, onClose }: { id: number; onClose: () => void }) {
   const [data, setData] = useState<PlayerData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,6 +26,9 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
   const [editingNick, setEditingNick] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const chartRef = useRef<Chart | null>(null)
+  const [showCompare, setShowCompare] = useState(false)
+  const [compareAbilities, setCompareAbilities] = useState<Ability[] | null>(null)
+  const [compareName, setCompareName] = useState<string>('')
 
   const fetchPlayer = useCallback(() => {
     setLoading(true)
@@ -42,31 +47,52 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
   const abilities = data?.abilities ?? []
   const top20 = data?.top20_ranks ? Object.entries(data.top20_ranks).sort((a, b) => Number(b[0]) - Number(a[0])) : []
 
-  // Radar chart via Chart.js
+  // Radar chart via Chart.js — supports an optional second dataset (player B, cyan)
   useEffect(() => {
     if (!canvasRef.current || abilities.length === 0) return
     if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null }
 
-    const labels = abilities.slice(0, 8).map(ab => ab.label_en)
-    const values = abilities.slice(0, 8).map(ab => {
+    const aSliced = abilities.slice(0, 8)
+    const labels = aSliced.map(ab => ab.label_en)
+
+    const norm = (ab: Ability): number => {
       if (ab.format === 'decimal') return ab.value / 2 * 100
       return ab.max > 0 ? (ab.value / ab.max) * 100 : 0
-    })
+    }
+    const valuesA = aSliced.map(norm)
+
+    const datasets: Chart['data']['datasets'] = [{
+      label: p?.name ?? 'A',
+      data: valuesA,
+      backgroundColor: 'rgba(255,70,85,0.15)',
+      borderColor: 'rgba(255,70,85,1)',
+      borderWidth: 2,
+      pointBackgroundColor: 'rgba(255,70,85,1)',
+      pointRadius: 3,
+    }]
+
+    if (compareAbilities) {
+      // Align B's abilities to A's label_en; missing -> 0
+      const bMap = new Map<string, Ability>()
+      for (const ab of compareAbilities) bMap.set(ab.label_en, ab)
+      const valuesB = aSliced.map(ab => {
+        const matched = bMap.get(ab.label_en)
+        return matched ? norm(matched) : 0
+      })
+      datasets.push({
+        label: compareName || 'B',
+        data: valuesB,
+        backgroundColor: 'rgba(0,200,220,0.15)',
+        borderColor: 'rgba(0,200,220,1)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(0,200,220,1)',
+        pointRadius: 3,
+      })
+    }
 
     chartRef.current = new Chart(canvasRef.current, {
       type: 'radar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Abilities',
-          data: values,
-          backgroundColor: 'rgba(255,70,85,0.15)',
-          borderColor: 'rgba(255,70,85,1)',
-          borderWidth: 2,
-          pointBackgroundColor: 'rgba(255,70,85,1)',
-          pointRadius: 3,
-        }],
-      },
+      data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: true,
@@ -80,12 +106,12 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
             pointLabels: { color: '#8b949e', font: { size: 11 } },
           },
         },
-        plugins: { legend: { display: false } },
+        plugins: { legend: { display: compareAbilities != null } },
       },
     })
 
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
-  }, [abilities])
+  }, [abilities, compareAbilities, compareName, p?.name])
 
   return (
     <Modal onClose={onClose} width={580} maxHeight="90vh">
@@ -157,6 +183,22 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
               <div className="sub">{data.rating.maps} maps</div>
             </div>
           )}
+
+          {/* Compare button */}
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-4)' }}>
+            <button className="button primary" onClick={() => setShowCompare(true)}>
+              对比其他选手
+            </button>
+            {compareAbilities && (
+              <button
+                className="button"
+                style={{ marginLeft: 'var(--space-2)' }}
+                onClick={() => { setCompareAbilities(null); setCompareName('') }}
+              >
+                清除对比 ({compareName})
+              </button>
+            )}
+          </div>
 
           {/* Abilities + radar */}
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--accent-red)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 'var(--space-3)', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--border-default)' }}>
@@ -244,6 +286,20 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
           )}
         </>
       )}
+      {showCompare && (
+        <PlayerSelectionModal
+          onPick={async (pid, pname) => {
+            try {
+              const d = await api.getPlayer(pid)
+              const ab: Ability[] = d?.data?.abilities ?? []
+              setCompareAbilities(ab.slice(0, 8))
+              setCompareName(pname)
+            } catch { /* ignore */ }
+            setShowCompare(false)
+          }}
+          onClose={() => setShowCompare(false)}
+        />
+      )}
     </Modal>
   )
 }
@@ -259,5 +315,57 @@ function StatBadge({ label, value, gold }: { label: string; value: number; gold?
       <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: gold ? 'var(--accent-red)' : 'var(--text-primary)' }}>{value.toLocaleString()}</span>
     </div>
+  )
+}
+
+/** Modal with a player-B picker; calls onPick(id, name) once a player is selected. */
+function PlayerSelectionModal({ onPick, onClose }: { onPick: (id: number, name: string) => void; onClose: () => void }) {
+  const [q, setQ] = useState('')
+  const [list, setList] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const search = async () => {
+    if (!q.trim()) return
+    setLoading(true)
+    try {
+      const r = await api.search(q, 'player')
+      setList(r?.items ?? [])
+    } catch { setList([]) }
+    setLoading(false)
+  }
+
+  return (
+    <Modal onClose={onClose} width={480}>
+      <h3 style={{ fontSize: 18, marginBottom: 'var(--space-3)' }}>选择对比选手</h3>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+        <input
+          className="input"
+          placeholder="输入选手名搜索"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && search()}
+          style={{ flex: 1 }}
+        />
+        <button className="button primary" onClick={search} disabled={loading}>
+          {loading ? '...' : '搜索'}
+        </button>
+      </div>
+      {list.length === 0 && <EmptyState message="输入选手名搜索后选择对手" />}
+      {list.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+          {list.map((item, i) => (
+            <div
+              key={i}
+              className="card hoverable"
+              onClick={() => onPick(item.id, item.name)}
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', cursor: 'pointer' }}
+            >
+              <span style={{ flex: 1, fontWeight: 600 }}>{item.name}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)' }}>ID {item.id}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
   )
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/arcdent/hltv-mcp/internal/normalizer"
 	"github.com/arcdent/hltv-mcp/internal/types"
 )
 
@@ -64,7 +65,7 @@ func (s *Store) BatchUpsertMatches(matches []types.NormalizedMatch) error {
 // category: "upcoming" (scheduled_at >= today), "today" (scheduled_at starts today),
 // "results" (played_at < today).
 func (s *Store) QueryMatchesByTime(category string, limit int) ([]types.NormalizedMatch, error) {
-	today := time.Now().UTC().Format("2006-01-02")
+	today := time.Now().In(normalizer.AsiaShanghai()).Format("2006-01-02")
 
 	var query string
 	var args []any

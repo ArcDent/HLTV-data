@@ -27,10 +27,6 @@ function readTime(text?: string): number {
   return Math.max(1, Math.round(words / 200))
 }
 
-const openTranslationSettings = () => {
-  window.dispatchEvent(new CustomEvent('open-settings', { detail: 'translation' }))
-}
-
 export default function News() {
   const [tab, setTab] = useState<Tab>('realtime')
   const [data, setData] = useState<any>(null)
@@ -123,16 +119,6 @@ export default function News() {
           </button>
         ))}
         <div style={{ flex: 1 }} />
-        <button
-          onClick={openTranslationSettings}
-          title="翻译设置"
-          className="button"
-          style={{
-            width: 32, height: 32, padding: 0, borderRadius: '50%',
-            color: cfg?.configured ? 'var(--accent-red)' : 'var(--text-tertiary)',
-            fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >⚙</button>
       </div>
 
       <div key={tab} style={{ animation: 'slideUp 0.3s ease both' }}>

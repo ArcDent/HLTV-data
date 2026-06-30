@@ -238,7 +238,7 @@ export default function TeamDetail({ id, onClose }: { id: number; onClose: () =>
           {/* Compare button */}
           <div style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
             <button className="button primary" onClick={() => setShowCompare(true)}>
-              [Compare with another team]
+              对比其他队伍
             </button>
           </div>
 

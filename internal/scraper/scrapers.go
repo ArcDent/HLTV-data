@@ -68,6 +68,14 @@ func (s *ResultsScraper) GetResults(ctx context.Context) (*goquery.Document, err
 	return fetchDoc(s.cli, ctx, "/results", "results")
 }
 
+// GetResultsByTeams fetches /results filtered by two team IDs (HLTV OR logic:
+// returns matches where either team appeared). The caller must client-side
+// filter for direct head-to-head encounters (team1==aName && team2==bName).
+func (s *ResultsScraper) GetResultsByTeams(ctx context.Context, teamAID, teamBID int) (*goquery.Document, error) {
+	path := fmt.Sprintf("/results?team=%d&team=%d", teamAID, teamBID)
+	return fetchDoc(s.cli, ctx, path, "results_h2h")
+}
+
 type MatchesScraper struct{ cli *client.HltvClient }
 
 func NewMatchesScraper(cli *client.HltvClient) *MatchesScraper { return &MatchesScraper{cli: cli} }

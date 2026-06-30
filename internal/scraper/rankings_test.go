@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -9,21 +10,23 @@ import (
 )
 
 // TestParseRankings verifies the HLTV /ranking/teams HTML parser extracts
-// rank, team id, name, country and points from each row.
+// rank, team id, name and points from each row using the redesigned selectors
+// (.ranked-team.standard-box / .position / .name / .points / a.moreLink).
+// The ranking page no longer exposes a country column, so Country is empty.
 func TestParseRankings(t *testing.T) {
 	html := `
 	<div class="ranking">
-	  <div class="team">
-		<span class="team-rank-num">#1</span>
-		<a class="teambox" href="/team/5378/vitaly">Vitality</a>
-		<span class="team-country">France</span>
-		<span class="points">837</span>
+	  <div class="ranked-team standard-box">
+		<span class="position">#1</span>
+		<a class="moreLink" href="/team/5378/vitaly">Vitality</a>
+		<span class="name">Vitality</span>
+		<span class="points">(837 HLTV points)</span>
 	  </div>
-	  <div class="team">
-		<span class="team-rank-num">#2</span>
-		<a class="teambox" href="/team/4608/spirit">Spirit</a>
-		<span class="team-country">Russia</span>
-		<span class="points">712</span>
+	  <div class="ranked-team standard-box">
+		<span class="position">#2</span>
+		<a class="moreLink" href="/team/4608/spirit">Spirit</a>
+		<span class="name">Spirit</span>
+		<span class="points">(712 HLTV points)</span>
 	  </div>
 	</div>`
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(html)))
@@ -35,8 +38,8 @@ func TestParseRankings(t *testing.T) {
 		t.Fatalf("expected 2 rows, got %d", len(got))
 	}
 	want := []types.TeamRankingRow{
-		{Rank: 1, TeamID: 5378, Name: "Vitality", Country: "France", Points: "837"},
-		{Rank: 2, TeamID: 4608, Name: "Spirit", Country: "Russia", Points: "712"},
+		{Rank: 1, TeamID: 5378, Name: "Vitality", Country: "", Points: "837"},
+		{Rank: 2, TeamID: 4608, Name: "Spirit", Country: "", Points: "712"},
 	}
 	for i, w := range want {
 		if got[i] != w {
@@ -56,5 +59,31 @@ func TestParseRankingsEmpty(t *testing.T) {
 	got := parseRankings(doc)
 	if len(got) != 0 {
 		t.Fatalf("expected 0 rows, got %d", len(got))
+	}
+}
+
+// TestParseRankingsTop30Cap verifies the parser caps output at 30 rows even
+// when the page lists sub-region rankings beyond #30.
+func TestParseRankingsTop30Cap(t *testing.T) {
+	var rowsHTML string
+	for i := 1; i <= 35; i++ {
+		rowsHTML += fmt.Sprintf(`<div class="ranked-team standard-box">
+			<span class="position">#%d</span>
+			<a class="moreLink" href="/team/%d/t%d">T%d</a>
+			<span class="name">T%d</span>
+			<span class="points">(%d HLTV points)</span>
+			</div>`, i, i, i, i, i, i)
+	}
+	html := `<div class="ranking">` + rowsHTML + `</div>`
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader([]byte(html)))
+	if err != nil {
+		t.Fatalf("parse doc: %v", err)
+	}
+	got := parseRankings(doc)
+	if len(got) != 30 {
+		t.Fatalf("expected 30 rows (top-30 cap), got %d", len(got))
+	}
+	if got[29].Rank != 30 {
+		t.Errorf("last row rank: got %d, want 30", got[29].Rank)
 	}
 }

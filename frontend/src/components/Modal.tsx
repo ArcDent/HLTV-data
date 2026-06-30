@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom'
+
 interface ModalProps {
   children: React.ReactNode
   onClose: () => void
@@ -6,9 +8,12 @@ interface ModalProps {
   fullscreen?: boolean
 }
 
+// Rendered through a portal to document.body so the fixed overlay escapes any
+// ancestor with a transform (e.g. slideUp animation with `both` fill-mode leaves
+// a non-none matrix that creates a containing block and breaks position:fixed).
 export default function Modal({ children, onClose, width, maxHeight, fullscreen }: ModalProps) {
   const isFullscreen = fullscreen
-  return (
+  return createPortal(
     <div
       onClick={onClose}
       style={{
@@ -30,8 +35,8 @@ export default function Modal({ children, onClose, width, maxHeight, fullscreen 
           maxWidth: isFullscreen ? '100vw' : '90vw',
           maxHeight: isFullscreen ? '100vh' : (maxHeight ?? '85vh'),
           height: isFullscreen ? '100vh' : 'auto',
-          overflowY: 'auto',
-          padding: isFullscreen ? 'var(--space-5)' : 28,
+          display: 'flex',
+          flexDirection: 'column',
           boxShadow: 'var(--shadow-modal)',
           animation: 'slideUp 0.25s ease',
         }}
@@ -42,11 +47,21 @@ export default function Modal({ children, onClose, width, maxHeight, fullscreen 
           aria-label="Close"
           style={{
             position: 'absolute', top: 14, right: 14, width: 30, height: 30,
-            fontSize: 16,
+            fontSize: 16, zIndex: 2,
           }}
         >✕</button>
-        {children}
+        <div
+          style={{
+            overflowY: 'auto',
+            flex: 1,
+            minHeight: 0,
+            padding: isFullscreen ? 'var(--space-5)' : 28,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

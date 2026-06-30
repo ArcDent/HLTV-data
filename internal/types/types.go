@@ -49,8 +49,7 @@ const (
 	OutcomeUnknown   MatchOutcome = "unknown"
 )
 
-// Unified error codes for upstream fetch failures. See
-// docs/superpowers/specs/2026-06-29-utls-refactor-design.md §6.
+// Unified error codes for upstream fetch failures.
 const (
 	ErrNetwork     = "NETWORK"     // TCP/TLS dial failure — retryable
 	ErrRead        = "READ"        // Response body read failure — retryable
@@ -142,9 +141,7 @@ type ToolMeta struct {
 	Timezone      string          `json:"timezone"`
 	CacheHit      bool            `json:"cache_hit"`
 	TTLSec        int             `json:"ttl_sec"`
-	SchemaVersion string          `json:"schema_version"`
 	Partial       bool            `json:"partial"`
-	Notes         []string        `json:"notes,omitempty"`
 	Stale         bool            `json:"stale,omitempty"`
 	StaleAgeSec   int             `json:"stale_age_sec,omitempty"`
 	Pagination    *PaginationMeta `json:"pagination,omitempty"`

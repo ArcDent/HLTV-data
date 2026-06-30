@@ -47,7 +47,7 @@ HLTV-data 是一个 Go 单二进制全栈 HLTV MCP 服务，将 HLTV.org 的赛�
 ## 项目结构
 
 ```
-hltv-mcp-fully-rebuild/
+HLTV-data/
 ├── main.go                        # MCP stdio + HTTP 双 goroutine 入口
 ├── Dockerfile                     # 三阶段构建（前端 → Go → 运行时）
 ├── docker-compose.yml             # Compose 快速启动
@@ -57,7 +57,7 @@ hltv-mcp-fully-rebuild/
 │   ├── crypto/             # AES-256-GCM 加解密（API Key 持久化）
 │   ├── cache/              # 内存缓存（TTL + stale + 并发合并）
 │   ├── client/             # uTLS (iOS Safari 指纹) CF 绕过
-│   ├── scraper/            # 7 个 HLTV 爬虫模块 + 公共搜索解析
+│   ├── scraper/            # 8 个 HLTV 爬虫模块 + 公共搜索解析
 │   ├── localization/       # 中英文名称映射（26 队伍 + 98 选手）
 │   ├── normalizer/         # HTML → 标准化数据结构
 │   ├── facade/             # 核心编排层
@@ -144,7 +144,7 @@ hltv-mcp-fully-rebuild/
 | **首页** | `/` | 今日精选 + 热门新闻 + 排名变动 |
 | **赛程** | `/matches` | 赛程浏览（今日/即将/赛果），SSE 实时刷新 |
 | **队伍** | `/teams` | 队伍搜索 + 对比 + 详情 |
-| **选手** | `/players` | 选手搜索 + TOP 20 + 地区筛选 + 详情（雷达图） |
+| **选手** | `/players` | 选手搜索 + 详情（雷达图） |
 | **新闻** | `/news` | 实时/归档新闻列表 + 详情弹层 + 翻译 |
 | **设置** | `/settings` | 翻译 LLM 配置 + 别名编辑 |
 
