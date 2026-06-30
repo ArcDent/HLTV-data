@@ -28,7 +28,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
   const chartRef = useRef<Chart | null>(null)
   const [showCompare, setShowCompare] = useState(false)
   const [compareAbilities, setCompareAbilities] = useState<Ability[] | null>(null)
-  const [compareName, setCompareName] = useState<string>('')
+  const [compareId, setCompareId] = useState<number | null>(null)
 
   const fetchPlayer = useCallback(() => {
     setLoading(true)
@@ -80,7 +80,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
         return matched ? norm(matched) : 0
       })
       datasets.push({
-        label: '选手 B',
+        label: `选手 B · ID ${compareId}`,
         data: valuesB,
         backgroundColor: 'rgba(0,200,220,0.15)',
         borderColor: 'rgba(0,200,220,1)',
@@ -111,7 +111,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
     })
 
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
-  }, [abilities, compareAbilities, compareName, p?.name])
+  }, [abilities, compareAbilities, compareId, p?.name])
 
   return (
     <Modal onClose={onClose} width={580} maxHeight="90vh">
@@ -193,9 +193,9 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
               <button
                 className="button"
                 style={{ marginLeft: 'var(--space-2)' }}
-                onClick={() => { setCompareAbilities(null); setCompareName('') }}
+                onClick={() => { setCompareAbilities(null); setCompareId(null) }}
               >
-                清除对比
+                清除对比 (ID {compareId})
               </button>
             )}
           </div>
@@ -288,12 +288,12 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
       )}
       {showCompare && (
         <PlayerSelectionModal
-          onPick={async (pid, pname) => {
+          onPick={async (pid) => {
             try {
               const d = await api.getPlayer(pid)
               const ab: Ability[] = d?.data?.abilities ?? []
               setCompareAbilities(ab.slice(0, 8))
-              setCompareName(pname)
+              setCompareId(pid)
             } catch { /* ignore */ }
             setShowCompare(false)
           }}
@@ -319,7 +319,7 @@ function StatBadge({ label, value, gold }: { label: string; value: number; gold?
 }
 
 /** Modal with a player-B picker; calls onPick(id, name) once a player is selected. */
-function PlayerSelectionModal({ onPick, onClose }: { onPick: (id: number, name: string) => void; onClose: () => void }) {
+function PlayerSelectionModal({ onPick, onClose }: { onPick: (id: number) => void; onClose: () => void }) {
   const [q, setQ] = useState('')
   const [list, setList] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -357,7 +357,7 @@ function PlayerSelectionModal({ onPick, onClose }: { onPick: (id: number, name: 
             <div
               key={i}
               className="card hoverable"
-              onClick={() => onPick(item.id, item.name)}
+              onClick={() => onPick(item.id)}
               style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', cursor: 'pointer' }}
             >
               <span style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>ID {item.id}</span>

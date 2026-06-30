@@ -40,12 +40,12 @@
 注：docs/ 已清空（utls-bypass 孤儿文档 + superpowers 过程文档全删，契约源为本文件 + 代码）。
 
 ## 最近操作
-- 2026-06-30：前端 2 Bug 修复（手机搜索框 + 选手对比去全名）— (1) SearchableList.tsx:40 input 移除 `search-expand` class（components.css:105 `@media(max-width:768px){.search-expand{display:none}}` 本为 TopBar 顶部搜索栏设计，SearchableList 误用同一 class 致手机端页面搜索框被隐藏无法输入；TopBar 仍正确隐藏）；(2) PlayerDetail.tsx PlayerSelectionModal 列表项去 `item.name`（HLTV 搜索 scrapers.go:46 `link.Text()` 返回全名格式如 `Mathieu 'ZywOo' Herbaut`）只显 `ID {item.id}`，清除按钮/雷达图 B legend 去 compareName 显示。Claude_Preview + chrome-devtools 移动端模拟验证：搜索框 `display:block visible:true`；弹窗列表 s1mple 搜出 `ID 7998`/`ID 23609` 无全名
+- 2026-06-30：修复对比页 B 选手 ID 回归（未提交）— commit 6e782b8 删 compareName 时漏替换 ID：onPick(pid,pname) 仅存 pname→compareName，pid 未留存，致清除按钮 + 雷达图例 B 身份全丢。根因修复：新增 `compareId` 状态，onPick 改签 `(pid)=>{...; setCompareId(pid)}`，清除按钮显 `清除对比 (ID {compareId})`、雷达 B dataset label 显 `` `选手 B · ID ${compareId}` ``、useEffect 依赖数组加 compareId 触发重渲染。PlayerDetail.tsx 7 处编辑（state/label/依赖/清除按钮/onPick 签名+实现/list 项 onClick）。chrome-devtools 验证：s1mple 详情→对比其他选手→搜 zywoo→点 ID 11893 后，清除按钮 DOM 文本 = "清除对比 (ID 11893)" ✓；雷达图例为 canvas 像素渲染且 chart.js 4.x 实例不挂 canvas（`$chartjs` 仅 `{initial}` meta）无法 DOM 读 label，以代码层 label 模板 + 依赖数组 + 截图佐证。未提交，待用户确认
+- 2026-06-30：前端 2 Bug 修复（手机搜索框 + 选手对比去全名）— (1) SearchableList.tsx:40 input 移除 `search-expand` class（components.css:105 `@media(max-width:768px){.search-expand{display:none}}` 本为 TopBar 顶部搜索栏设计，SearchableList 误用同一 class 致手机端页面搜索框被隐藏无法输入；TopBar 仍正确隐藏）；(2) PlayerDetail.tsx PlayerSelectionModal 列表项去 `item.name`（HLTV 搜索 scrapers.go:46 `link.Text()` 返回全名格式如 `Mathieu 'ZywOo' Herbaut`）只显 `ID {item.id}`，清除按钮/雷达图 B legend 去 compareName 显示。Claude_Preview + chrome-devtools 移动端模拟验证：搜索框 `display:block visible:true`；弹窗列表 s1mple 搜出 `ID 7998`/`ID 23609` 无全名。已 push origin/main（commit 6e782b8，4 文件：SearchableList.tsx/PlayerDetail.tsx/AGENTS.md/.claude/launch.json；.claude/settings.local.json 为本地权限配置未提交）
 - 2026-06-30：代码文档瘦身收敛 — (1) 删 docs/utls-bypass-*.md + docs/superpowers/（plans/specs 9 篇过程文档）；(2) facade buildComparison 简化为 `return &TeamComparison{TeamA:*a,TeamB:*b}`（删 ~97 行错误死代码 H2H 逻辑：scrapeTeam 用 GetUpcoming 填 RecentMatches 是未来赛程非历史交手，扫它产出的 H2H 恒空/错误；主 H2H 由 CompareTeams 的 /results?team=a&team=b + isDirectH2H + buildHeadToHead 负责）；(3) 删 types.ToolMeta SchemaVersion（硬编码 "1.0" 无读取者）+ Notes（零赋值死字段）；(4) 修 facade GetTeamDetailCached/refreshTeam CacheTTLPlayerDetail→CacheTTLTeam bug（team detail 误用 7 天 TTL）；(5) 合并 translateNewTitles/translateNewRealtimeTitles 为泛型 translateTitles[T]（消除 ~38 行重复）；(6) 清理 types.go 错误码注释对已删 spec 的引用。go build ./... 通过；Docker 镜像 hltv-data:test 重建 + 容器 hltv-test 启动于 :8082，/api/health ok + /api/status 6/6 上游端点 ok（uTLS 抗 CF 正常），交用户手动测试；push origin/main（commit 642d3d9，25 commits 远端同步）
 - 2026-06-30：前端 3 Bug 修复收尾 — Issue 1 放弃 top20 栏目删整链（CF managed challenge headless 无法自动获 cf_clearance）；Issue 2 Teams 列表页删对比按钮；Issue 3 Modal createPortal 到 body 修复 slideUp animation transform 破坏 fixed containing block
 - 2026-06-30：Round 2 后端根因修复 — Issue 6A rankings 选择器改 `.ranked-team.standard-box`/`.position`/`.name`/`.points`/`a.moreLink`（TOP5 有数据）；Issue 8 CompareTeams 抓 `/results?team=X&team=Y` 过滤直接交手（Vitality vs G2 H2H total=3 winsA=3）；Issue 5 /stats/players CF 路径级防护降级；bonus NormalizeMatches Result 解析修复（之前恒 OutcomeUnknown）
 - 2026-06-30：删旧外部抓取服务文档残留 + Docker 黑盒测试通过（5 主页面 + API 全 200；Lighthouse a11y 93 / BP 81 / SEO 82；LCP 868ms / CLS 0.02；commit 5280f26）
-- 2026-06-29：uTLS 重构（HelloIOS_Auto 指纹 + http2 自定义 DialTLSContext + 统一错误码 NETWORK/READ/CHALLENGE/NOT_FOUND/SERVER/UNAVAILABLE + Retryable）+ 前端重设计（Esports 暗色设计系统 4 CSS + 9 组件 + 10 页面 + chart.js 雷达图 + 移动端汉堡菜单）
 
 ## 关键发现
 
@@ -142,4 +142,4 @@
 - 验证 /results 页面 uTLS 绕过稳定性
 
 ## 进行中
-- 用户手动测试 Docker 容器 hltv-test（http://localhost:8082），含本次瘦身收敛 + 前端 3 Bug + Round 2 后端根因 + 本次前端 2 Bug（手机搜索框 + 选手对比去全名）；测完反馈后停止容器（docker stop hltv-test && docker rm hltv-test）
+- 用户手动测试 Docker 容器 hltv-test（http://localhost:8082），含本次瘦身收敛 + 前端 3 Bug + Round 2 后端根因 + 前端 2 Bug（手机搜索框 + 选手对比去全名）+ 对比 ID 回归修复（PlayerDetail.tsx 未提交，待确认推送）；测完反馈后停止容器（docker stop hltv-test && docker rm hltv-test）
