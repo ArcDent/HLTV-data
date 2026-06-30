@@ -27,14 +27,29 @@ func TestNormalizeMatches(t *testing.T) {
 }
 
 func TestNormalizeNews(t *testing.T) {
-	html := `<div class="newstext">Test Title</div>`
+	// Real HLTV archive structure: each news item is an <a class="newsline article">
+	// wrapping its own .newstext; all items live in a shared container. The link
+	// must come from the item's own <a>, not the first <a> in the shared container.
+	html := `<div class="standard-box standard-list">` +
+		`<a href="/news/45028/media-legacy-target-tomaszin" class="newsline article"><img class="newsflag"><div class="newstext">Media: Legacy target tomaszin </div><div class="newstc"><div class="newsrecent">2026-06-30</div></div></a>` +
+		`<a href="/news/45027/sdy-hits-free-agency" class="newsline article"><img class="newsflag"><div class="newstext">sdy hits free agency </div><div class="newstc"><div class="newsrecent">2026-06-30</div></div></a>` +
+		`</div>`
 	doc, _ := goquery.NewDocumentFromReader(strings.NewReader(html))
 	items := NormalizeNews(doc)
-	if len(items) == 0 {
-		t.Fatal("expected news items")
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
 	}
-	if items[0].Title != "Test Title" {
-		t.Errorf("title: %s", items[0].Title)
+	if items[0].Title != "Media: Legacy target tomaszin" {
+		t.Errorf("title[0]: %s", items[0].Title)
+	}
+	if items[0].Link != "/news/45028/media-legacy-target-tomaszin" {
+		t.Errorf("link[0]: %s", items[0].Link)
+	}
+	if items[1].Link != "/news/45027/sdy-hits-free-agency" {
+		t.Errorf("link[1]: %s (must be the item's own link, not the shared container's first)", items[1].Link)
+	}
+	if items[0].PublishedAt != "2026-06-30" {
+		t.Errorf("date[0]: %s", items[0].PublishedAt)
 	}
 }
 

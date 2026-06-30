@@ -7,9 +7,11 @@ import (
 	"github.com/arcdent/hltv-mcp/internal/types"
 )
 
-// NormalizeNews parses archive news items from HLTV news page HTML
-// HLTV structure: .newstext div contains the title text directly (no <a> inside)
-// The link is in a parent <a> tag wrapping the entire news block
+// NormalizeNews parses archive news items from HLTV news page HTML.
+// HLTV archive structure: each item is an <a class="newsline article"> that
+// wraps its own .newstext (and .newstc > .newsrecent). All items share one
+// container, so the link must come from the item's own <a> — not from Find("a")
+// on the shared container, which would return the first item's link for every item.
 func NormalizeNews(doc *goquery.Document) []types.NewsItem {
 	var items []types.NewsItem
 	doc.Find(".newstext").Each(func(_ int, s *goquery.Selection) {
@@ -17,13 +19,7 @@ func NormalizeNews(doc *goquery.Document) []types.NewsItem {
 		if title == "" {
 			return
 		}
-		// Look for link in ancestors or sibling containers
-		link, _ := s.Parent().Find("a").First().Attr("href")
-		if link == "" {
-			// Try climbing up to the parent container
-			link, _ = s.Parent().Parent().Find("a").Attr("href")
-		}
-		// Date is in sibling .newstc > .newsrecent
+		link, _ := s.Closest("a").Attr("href")
 		date := cleanText(s.Parent().Find(".newsrecent").First().Text())
 		items = append(items, types.NewsItem{
 			Title:       title,

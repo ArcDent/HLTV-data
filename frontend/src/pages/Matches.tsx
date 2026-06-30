@@ -35,8 +35,7 @@ export default function Matches() {
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
 
-  // SSE: background refresh pushes updated match data
-  useSSE('matches', () => { fetchEvents() })
+  useSSE('matches', fetchEvents)
 
   const totalEvents = events.length + (other.length > 0 ? 1 : 0)
 

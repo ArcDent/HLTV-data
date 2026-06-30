@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 type SSEEvent = { entity: string; id?: number; name?: string }
 type Callback = (evt: SSEEvent) => void
@@ -13,43 +13,38 @@ function connect(): EventSource {
     try {
       const evt: SSEEvent = JSON.parse(e.data)
       listeners.get(evt.entity)?.forEach(cb => cb(evt))
-      // also notify wildcard listeners
-      listeners.get('*')?.forEach(cb => cb(evt))
     } catch {
       // ignore malformed events
     }
   })
   es.onerror = () => {
-    // EventSource auto-reconnects; no action needed
+    // EventSource auto-reconnects
   }
   eventSource = es
   return es
 }
 
-/**
- * Subscribe to SSE refresh events. Callback fires when backend finishes
- * a background scrape and pushes a `refreshed` event.
- *
- * @param entity - entity type to listen for ("player", "team", "matches", "news"), or "*" for all
- * @param callback - called with the SSE event payload
- */
+// Subscribe to SSE refresh events. The callback is held in a ref so the
+// listener is registered once per entity, not re-registered every render.
 export function useSSE(entity: string, callback: Callback) {
+  const cbRef = useRef(callback)
+  cbRef.current = callback
+
   useEffect(() => {
     const es = connect()
-    // Ensure es is connected (EventSource constructor triggers connection)
     void es
 
+    const handler: Callback = (evt) => cbRef.current(evt)
     if (!listeners.has(entity)) {
       listeners.set(entity, new Set())
     }
-    listeners.get(entity)!.add(callback)
+    listeners.get(entity)!.add(handler)
 
     return () => {
-      listeners.get(entity)?.delete(callback)
-      if (listeners.get(entity)?.size === 0) {
-        listeners.delete(entity)
-      }
-      // Don't close EventSource — it's a singleton shared across components
+      const set = listeners.get(entity)
+      if (!set) return
+      set.delete(handler)
+      if (set.size === 0) listeners.delete(entity)
     }
-  }, [entity, callback])
+  }, [entity])
 }

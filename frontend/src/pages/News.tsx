@@ -43,8 +43,7 @@ export default function News() {
 
   useEffect(() => { fetchNews() }, [fetchNews])
 
-  // SSE: background refresh pushes updated news data
-  useSSE('news', () => { fetchNews() })
+  useSSE('news', fetchNews)
 
   useEffect(() => {
     const items: any[] = data?.items ?? []
