@@ -37,7 +37,7 @@ export default function SearchableList({ type, placeholder, emptyHint, apiSearch
       <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
           <input
-            className="input search-expand"
+            className="input"
             placeholder={placeholder}
             value={q} onChange={e => setQ(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && search()}

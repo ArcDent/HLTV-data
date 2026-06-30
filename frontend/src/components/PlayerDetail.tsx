@@ -80,7 +80,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
         return matched ? norm(matched) : 0
       })
       datasets.push({
-        label: compareName || 'B',
+        label: '选手 B',
         data: valuesB,
         backgroundColor: 'rgba(0,200,220,0.15)',
         borderColor: 'rgba(0,200,220,1)',
@@ -195,7 +195,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
                 style={{ marginLeft: 'var(--space-2)' }}
                 onClick={() => { setCompareAbilities(null); setCompareName('') }}
               >
-                清除对比 ({compareName})
+                清除对比
               </button>
             )}
           </div>
@@ -360,8 +360,7 @@ function PlayerSelectionModal({ onPick, onClose }: { onPick: (id: number, name: 
               onClick={() => onPick(item.id, item.name)}
               style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', cursor: 'pointer' }}
             >
-              <span style={{ flex: 1, fontWeight: 600 }}>{item.name}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)' }}>ID {item.id}</span>
+              <span style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>ID {item.id}</span>
             </div>
           ))}
         </div>
