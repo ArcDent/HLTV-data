@@ -28,7 +28,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
   const chartRef = useRef<Chart | null>(null)
   const [showCompare, setShowCompare] = useState(false)
   const [compareAbilities, setCompareAbilities] = useState<Ability[] | null>(null)
-  const [compareId, setCompareId] = useState<number | null>(null)
+  const [compareName, setCompareName] = useState<string>('')
 
   const fetchPlayer = useCallback(() => {
     setLoading(true)
@@ -80,7 +80,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
         return matched ? norm(matched) : 0
       })
       datasets.push({
-        label: `选手 B · ID ${compareId}`,
+        label: compareName || '选手 B',
         data: valuesB,
         backgroundColor: 'rgba(0,200,220,0.15)',
         borderColor: 'rgba(0,200,220,1)',
@@ -111,7 +111,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
     })
 
     return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null } }
-  }, [abilities, compareAbilities, compareId, p?.name])
+  }, [abilities, compareAbilities, compareName, p?.name])
 
   return (
     <Modal onClose={onClose} width={580} maxHeight="90vh">
@@ -193,9 +193,9 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
               <button
                 className="button"
                 style={{ marginLeft: 'var(--space-2)' }}
-                onClick={() => { setCompareAbilities(null); setCompareId(null) }}
+                onClick={() => { setCompareAbilities(null); setCompareName('') }}
               >
-                清除对比 (ID {compareId})
+                清除对比 ({compareName})
               </button>
             )}
           </div>
@@ -293,7 +293,7 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
               const d = await api.getPlayer(pid)
               const ab: Ability[] = d?.data?.abilities ?? []
               setCompareAbilities(ab.slice(0, 8))
-              setCompareId(pid)
+              setCompareName(d?.data?.profile?.name ?? '')
             } catch { /* ignore */ }
             setShowCompare(false)
           }}
