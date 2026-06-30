@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -26,8 +27,9 @@ func (s *Store) BatchUpsertMatches(matches []types.NormalizedMatch) error {
 	stmt, err := tx.Prepare(`
 		INSERT INTO matches (match_id, team1, team2, team1_id, team2_id,
 			opponent, opponent_id, event, score, result, winner, best_of,
-			scheduled_at, played_at, map_text, fetched_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			scheduled_at, played_at, map_text, team1_logo, team2_logo,
+			fetched_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(match_id) DO UPDATE SET
 			team1=COALESCE(NULLIF(excluded.team1,''), matches.team1),
 			team2=COALESCE(NULLIF(excluded.team2,''), matches.team2),
@@ -41,6 +43,8 @@ func (s *Store) BatchUpsertMatches(matches []types.NormalizedMatch) error {
 			scheduled_at=COALESCE(NULLIF(excluded.scheduled_at,''), matches.scheduled_at),
 			played_at=COALESCE(NULLIF(excluded.played_at,''), matches.played_at),
 			map_text=COALESCE(NULLIF(excluded.map_text,''), matches.map_text),
+			team1_logo=COALESCE(NULLIF(excluded.team1_logo,''), matches.team1_logo),
+			team2_logo=COALESCE(NULLIF(excluded.team2_logo,''), matches.team2_logo),
 			updated_at=excluded.updated_at`)
 	if err != nil {
 		return fmt.Errorf("batch upsert matches: prepare: %w", err)
@@ -53,7 +57,7 @@ func (s *Store) BatchUpsertMatches(matches []types.NormalizedMatch) error {
 		}
 		_, err := stmt.Exec(m.MatchID, m.Team1, m.Team2, m.Team1ID, m.Team2ID,
 			m.Opponent, m.OpponentID, m.Event, m.Score, string(m.Result), m.Winner,
-			m.BestOf, m.ScheduledAt, m.PlayedAt, m.MapText, now, now)
+			m.BestOf, m.ScheduledAt, m.PlayedAt, m.MapText, m.Team1Logo, m.Team2Logo, now, now)
 		if err != nil {
 			return fmt.Errorf("batch upsert matches: exec id=%d: %w", m.MatchID, err)
 		}
@@ -73,25 +77,25 @@ func (s *Store) QueryMatchesByTime(category string, limit int) ([]types.Normaliz
 	switch category {
 	case "upcoming":
 		query = `SELECT match_id, team1, team2, team1_id, team2_id,
-			event, score, result, winner, best_of, scheduled_at, played_at, map_text
+			event, score, result, winner, best_of, scheduled_at, played_at, map_text, team1_logo, team2_logo
 			FROM matches WHERE scheduled_at >= ?
 			ORDER BY scheduled_at ASC`
 		args = []any{today}
 	case "today":
 		query = `SELECT match_id, team1, team2, team1_id, team2_id,
-			event, score, result, winner, best_of, scheduled_at, played_at, map_text
+			event, score, result, winner, best_of, scheduled_at, played_at, map_text, team1_logo, team2_logo
 			FROM matches WHERE scheduled_at LIKE ?
 			ORDER BY scheduled_at ASC`
 		args = []any{today + "%"}
 	case "results":
 		query = `SELECT match_id, team1, team2, team1_id, team2_id,
-			event, score, result, winner, best_of, scheduled_at, played_at, map_text
+			event, score, result, winner, best_of, scheduled_at, played_at, map_text, team1_logo, team2_logo
 			FROM matches WHERE played_at < ?
 			ORDER BY played_at DESC`
 		args = []any{today}
 	default:
 		query = `SELECT match_id, team1, team2, team1_id, team2_id,
-			event, score, result, winner, best_of, scheduled_at, played_at, map_text
+			event, score, result, winner, best_of, scheduled_at, played_at, map_text, team1_logo, team2_logo
 			FROM matches ORDER BY COALESCE(scheduled_at, played_at) DESC`
 	}
 
@@ -109,10 +113,17 @@ func (s *Store) QueryMatchesByTime(category string, limit int) ([]types.Normaliz
 	for rows.Next() {
 		var m types.NormalizedMatch
 		var resultStr string
+		var logo1, logo2 sql.NullString
 		if err := rows.Scan(&m.MatchID, &m.Team1, &m.Team2, &m.Team1ID, &m.Team2ID,
 			&m.Event, &m.Score, &resultStr, &m.Winner,
-			&m.BestOf, &m.ScheduledAt, &m.PlayedAt, &m.MapText); err != nil {
+			&m.BestOf, &m.ScheduledAt, &m.PlayedAt, &m.MapText, &logo1, &logo2); err != nil {
 			return nil, fmt.Errorf("scan: %w", err)
+		}
+		if logo1.Valid {
+			m.Team1Logo = logo1.String
+		}
+		if logo2.Valid {
+			m.Team2Logo = logo2.String
 		}
 		m.Result = types.MatchOutcome(resultStr)
 		matches = append(matches, m)

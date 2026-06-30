@@ -37,6 +37,16 @@ func NormalizeTeamDetail(doc *goquery.Document) types.TeamDetail {
 		}
 	}
 
+	// Logo: the team page header exposes a single img.teamlogo (no day/night
+	// variants for the main container). Skip HLTV's placeholder SVG so the
+	// frontend falls back to the first-letter avatar for logo-less teams.
+	if src, ok := doc.Find(".profile-team-logo-container img.teamlogo").First().Attr("src"); ok {
+		src = decodeLogoSrc(src)
+		if !isPlaceholderLogo(src) {
+			td.Profile.Logo = src
+		}
+	}
+
 	// Ranking: use .value.h-rank for HLTV world rank
 	rankText := cleanText(doc.Find(".value.h-rank").First().Text())
 	if rankText != "" {
@@ -165,4 +175,52 @@ func normalizeTeamHighlights(doc *goquery.Document) types.TeamHighlights {
 	})
 
 	return h
+}
+
+// decodeLogoSrc normalizes HTML entities in a logo src URL. goquery already
+// decodes attributes, but this guards against double-encoded input cheaply.
+func decodeLogoSrc(src string) string {
+	return strings.ReplaceAll(src, "&amp;", "&")
+}
+
+// isPlaceholderLogo reports whether src is HLTV's placeholder SVG (the
+// first-letter "logo" used when a team has no real team logo).
+func isPlaceholderLogo(src string) bool {
+	return strings.Contains(src, "teamplaceholder") || strings.Contains(src, "/dynamic-svg/")
+}
+
+// pickLogoURL selects the best logo URL from a set of img elements, preferring
+// the night-only variant (dark-theme optimized) > day-only > base. Returns ""
+// if all candidates are placeholders or absent.
+func pickLogoURL(imgs *goquery.Selection) string {
+	var night, day, base string
+	imgs.Each(func(_ int, img *goquery.Selection) {
+		src, ok := img.Attr("src")
+		if !ok || src == "" || isPlaceholderLogo(src) {
+			return
+		}
+		src = decodeLogoSrc(src)
+		class, _ := img.Attr("class")
+		switch {
+		case strings.Contains(class, "night-only"):
+			if night == "" {
+				night = src
+			}
+		case strings.Contains(class, "day-only"):
+			if day == "" {
+				day = src
+			}
+		default:
+			if base == "" {
+				base = src
+			}
+		}
+	})
+	if night != "" {
+		return night
+	}
+	if day != "" {
+		return day
+	}
+	return base
 }

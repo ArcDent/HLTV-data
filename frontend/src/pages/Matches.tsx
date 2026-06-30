@@ -4,6 +4,7 @@ import useNicknames from '../hooks/useNicknames'
 import { useSSE } from '../hooks/useSSE'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import TeamLogo from '../components/TeamLogo'
 
 type Tab = 'today' | 'upcoming' | 'results'
 
@@ -38,8 +39,6 @@ export default function Matches() {
   useSSE('matches', () => { fetchEvents() })
 
   const totalEvents = events.length + (other.length > 0 ? 1 : 0)
-
-  const teamInitial = (name?: string) => (name ? name.charAt(0).toUpperCase() : '?')
 
   return (
     <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
@@ -101,7 +100,7 @@ export default function Matches() {
               </div>
               {topMatch && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-2)', padding: 'var(--space-2)', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
-                  <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>{teamInitial(topMatch.team1)}</span>
+                  <TeamLogo src={topMatch.team1_logo} name={topMatch.team1} size={24} />
                   <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{topMatch.team1 || '待定'}</span>
                   {topMatch.score ? (
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 16, fontWeight: 700, color: 'var(--accent-red)' }}>{topMatch.score}</span>
@@ -111,7 +110,7 @@ export default function Matches() {
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--accent-red)' }}>{(topMatch.scheduled_at ?? '').slice(11, 16) || '—:—'}</span>
                   )}
                   <span style={{ fontSize: 13, fontWeight: 600, flex: 1, textAlign: 'right' }}>{topMatch.team2 || '待定'}</span>
-                  <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff' }}>{teamInitial(topMatch.team2)}</span>
+                  <TeamLogo src={topMatch.team2_logo} name={topMatch.team2} size={24} />
                 </div>
               )}
             </div>

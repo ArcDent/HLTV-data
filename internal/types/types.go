@@ -67,6 +67,8 @@ type NormalizedMatch struct {
 	OpponentID  int          `json:"opponent_id,omitempty"`
 	Team1       string       `json:"team1,omitempty"`
 	Team2       string       `json:"team2,omitempty"`
+	Team1Logo   string       `json:"team1_logo,omitempty"`
+	Team2Logo   string       `json:"team2_logo,omitempty"`
 	Opponent    string       `json:"opponent,omitempty"`
 	Event       string       `json:"event,omitempty"`
 	Result      MatchOutcome `json:"result,omitempty"`
@@ -325,6 +327,7 @@ type TeamDetailProfile struct {
 	Name    string `json:"name"`
 	Slug    string `json:"slug"`
 	Country string `json:"country"`
+	Logo    string `json:"logo,omitempty"`
 }
 
 // TeamRanking holds world ranking and points

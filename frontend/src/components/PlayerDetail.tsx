@@ -353,16 +353,29 @@ function PlayerSelectionModal({ onPick, onClose }: { onPick: (id: number) => voi
       {list.length === 0 && <EmptyState message="输入选手名搜索后选择对手" />}
       {list.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-          {list.map((item, i) => (
-            <div
-              key={i}
-              className="card hoverable"
-              onClick={() => onPick(item.id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', cursor: 'pointer' }}
-            >
-              <span style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>ID {item.id}</span>
-            </div>
-          ))}
+          {list.map((item, i) => {
+            // item.name format: "Nikola 'NiKo' Kovač" — nickname is the quoted
+            // segment; real name is everything else. Fall back to the whole name
+            // or the numeric id when the nickname can't be parsed.
+            const m = item.name?.match(/'([^']+)'/)
+            const nick = m ? m[1] : (item.name || `#${item.id}`)
+            const real = (item.name || '').replace(/'[^']+'/g, '').replace(/\s+/g, ' ').trim()
+            return (
+              <div
+                key={i}
+                className="card hoverable"
+                onClick={() => onPick(item.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', cursor: 'pointer' }}
+              >
+                <span style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{nick}</span>
+                  {real && real !== nick && (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-tertiary)' }}>{real}</span>
+                  )}
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
     </Modal>

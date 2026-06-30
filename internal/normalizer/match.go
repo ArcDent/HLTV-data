@@ -134,6 +134,19 @@ func NormalizeMatches(doc *goquery.Document, perspective string) []types.Normali
 				m.Team2 = cleanText(s.Find(".team-cell .team2 .team").First().Text())
 			}
 
+			// Logos: prefer night-only variant for the dark theme. Support both
+			// the legacy .line-align.team1 and the .team-cell .team1 variant.
+			t1Sel := s.Find(".line-align.team1")
+			if t1Sel.Length() == 0 {
+				t1Sel = s.Find(".team-cell .team1")
+			}
+			t2Sel := s.Find(".line-align.team2")
+			if t2Sel.Length() == 0 {
+				t2Sel = s.Find(".team-cell .team2")
+			}
+			m.Team1Logo = pickLogoURL(t1Sel.Find("img.team-logo"))
+			m.Team2Logo = pickLogoURL(t2Sel.Find("img.team-logo"))
+
 			if score := cleanText(s.Find(".result-score").First().Text()); score != "" {
 				m.Score = score
 			}
@@ -239,6 +252,11 @@ func NormalizeUpcomingMatches(doc *goquery.Document, perspective string) []types
 
 			m.Team1 = cleanText(s.Find(".match-team.team1 .match-teamname").First().Text())
 			m.Team2 = cleanText(s.Find(".match-team.team2 .match-teamname").First().Text())
+
+			// Logos: /matches exposes day-only/night-only variants per team;
+			// pickLogoURL prefers night-only for the dark theme.
+			m.Team1Logo = pickLogoURL(s.Find(".match-team.team1 img.match-team-logo"))
+			m.Team2Logo = pickLogoURL(s.Find(".match-team.team2 img.match-team-logo"))
 
 			if m.Team1 == "" || m.Team2 == "" {
 				teamsText := cleanText(s.Find(".match-teams").First().Text())

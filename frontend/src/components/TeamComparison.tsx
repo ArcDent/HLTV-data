@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import Modal from './Modal'
 import { api } from '../api/client'
 import EmptyState from './EmptyState'
+import TeamLogo from './TeamLogo'
 
 type TeamDetail = {
-  profile: { id: number; name: string; slug: string; country: string }
+  profile: { id: number; name: string; slug: string; country: string; logo?: string }
   ranking: { world_rank: number; points: number }
   stats: { wins: number; losses: number; draws: number; win_rate: string; recent_form: string }
   achievements?: { label: string; count: number; tier: string }[]
@@ -104,14 +105,7 @@ function ComparisonBody({ data }: { data: TeamComparisonData }) {
         border: '1px solid rgba(255,70,85,0.35)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: 'var(--radius-lg)',
-            background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 28, color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)', flexShrink: 0,
-          }}>
-            {pa.name.charAt(0)}
-          </div>
+          <TeamLogo src={pa.logo} name={pa.name} size={64} radius="var(--radius-lg)" />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 26, fontWeight: 700, fontFamily: 'var(--font-display)' }}>{pa.name}</div>
             <div style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{pa.country || '—'}</div>
@@ -203,14 +197,13 @@ function ComparisonBody({ data }: { data: TeamComparisonData }) {
           border: '1px solid var(--border-default)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(135deg, rgba(0,200,220,0.5), rgba(0,150,180,0.3))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24, color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)', flexShrink: 0,
-            }}>
-              {pb.name.charAt(0)}
-            </div>
+            <TeamLogo
+              src={pb.logo}
+              name={pb.name}
+              size={56}
+              radius="var(--radius-lg)"
+              fallbackBg="linear-gradient(135deg, rgba(0,200,220,0.5), rgba(0,150,180,0.3))"
+            />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-display)' }}>{pb.name}</div>
               <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{pb.country || '—'}</div>

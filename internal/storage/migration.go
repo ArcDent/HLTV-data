@@ -29,6 +29,11 @@ func migrate(db *sql.DB) error {
 			return err
 		}
 	}
+	if v < 3 {
+		if err := applyV3(db); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -131,6 +136,23 @@ func applyV2(db *sql.DB) error {
 		}
 	}
 	_, err := db.Exec("INSERT INTO schema_version(version) VALUES(2)")
+	return err
+}
+
+// applyV3 adds team/match logo columns so logos persist across SQLite
+// (Tier 2) cache hits instead of being lost until the next HLTV re-scrape.
+func applyV3(db *sql.DB) error {
+	stmts := []string{
+		"ALTER TABLE teams ADD COLUMN logo TEXT",
+		"ALTER TABLE matches ADD COLUMN team1_logo TEXT",
+		"ALTER TABLE matches ADD COLUMN team2_logo TEXT",
+	}
+	for _, stmt := range stmts {
+		if _, err := db.Exec(stmt); err != nil {
+			return err
+		}
+	}
+	_, err := db.Exec("INSERT INTO schema_version(version) VALUES(3)")
 	return err
 }
 

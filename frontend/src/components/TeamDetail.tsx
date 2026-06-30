@@ -6,9 +6,10 @@ import useNicknames from '../hooks/useNicknames'
 import { useSSE } from '../hooks/useSSE'
 import { api } from '../api/client'
 import EmptyState from './EmptyState'
+import TeamLogo from './TeamLogo'
 
 type TeamData = {
-  profile: { id: number; name: string; slug: string; country?: string; region?: string }
+  profile: { id: number; name: string; slug: string; country?: string; region?: string; logo?: string }
   ranking: { world_rank: number; points: number }
   stats: { wins: number; losses: number; draws: number; win_rate: string; recent_form: string }
   achievements?: { label: string; count: number; tier: string }[]
@@ -60,14 +61,7 @@ export default function TeamDetail({ id, onClose }: { id: number; onClose: () =>
         <>
           {/* Header */}
           <div style={{ display: 'flex', gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(135deg, var(--accent-red), var(--accent-orange))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 26, color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)', flexShrink: 0,
-            }}>
-              {p.name.charAt(0)}
-            </div>
+            <TeamLogo src={p.logo} name={p.name} size={60} radius="var(--radius-lg)" />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.2 }}>{p.name}</div>
               <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
