@@ -131,7 +131,10 @@ func (f *HltvFacade) GetNewsArticleCached(ctx context.Context, url string) (type
 	}
 
 	if f.store != nil {
-		if article, ok, _ := f.store.GetNewsArticle(url); ok {
+		// body_text empty means only the list item was persisted (BatchUpsertNews);
+		// treat as miss and fall through to synchronous scrape so the first open
+		// shows a spinner -> full article instead of an empty body.
+		if article, ok, _ := f.store.GetNewsArticle(url); ok && article.BodyText != "" {
 			f.cache.Set(key, article, 10)
 			go f.refreshNewsArticle(url, key)
 			return article, nil
