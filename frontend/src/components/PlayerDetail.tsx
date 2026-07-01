@@ -168,8 +168,9 @@ export default function PlayerDetail({ id, onClose }: { id: number; onClose: () 
             <div style={{ display: 'flex', gap: 'var(--space-1)', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 'var(--space-4)' }}>
               {top20.map(([year, rank]) => (
                 <span key={year} className="badge" style={{
-                  background: rank === 1 ? 'linear-gradient(135deg, #f0c040, #c48a0a)' : rank === 2 ? '#e0e0d8' : 'rgba(255,70,85,0.12)',
-                  color: rank === 1 ? '#fff' : rank === 2 ? '#6b7280' : 'var(--accent-red)',
+                  background: rank === 1 ? 'transparent' : rank === 2 ? 'var(--bg-tertiary)' : 'rgba(255,70,85,0.12)',
+                  color: rank === 1 ? '#f0c040' : rank === 2 ? '#8b949e' : 'var(--accent-red)',
+                  border: rank === 1 ? '1px solid rgba(240, 192, 64, 0.4)' : 'none',
                 }}>{year} #{rank}</span>
               ))}
             </div>

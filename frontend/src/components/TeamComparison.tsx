@@ -112,8 +112,10 @@ function ComparisonBody({ data }: { data: TeamComparisonData }) {
           </div>
           {rankA > 0 && (
             <span className="badge" style={{
-              background: 'linear-gradient(135deg, #f0c040, #c48a0a)',
-              color: '#1a1d29', fontSize: 16, fontWeight: 700, padding: 'var(--space-2) var(--space-4)',
+              background: 'transparent',
+              color: '#f0c040',
+              border: '1px solid rgba(240, 192, 64, 0.4)',
+              fontSize: 16, fontWeight: 700, padding: 'var(--space-2) var(--space-4)',
             }}>
               🏆 World #{rankA}
             </span>
@@ -210,8 +212,10 @@ function ComparisonBody({ data }: { data: TeamComparisonData }) {
             </div>
             {rankB > 0 && (
               <span className="badge" style={{
-                background: 'linear-gradient(135deg, #f0c040, #c48a0a)',
-                color: '#1a1d29', fontSize: 14, fontWeight: 700, padding: 'var(--space-2) var(--space-4)',
+                background: 'transparent',
+                color: '#f0c040',
+                border: '1px solid rgba(240, 192, 64, 0.4)',
+                fontSize: 14, fontWeight: 700, padding: 'var(--space-2) var(--space-4)',
               }}>
                 🏆 World #{rankB}
               </span>

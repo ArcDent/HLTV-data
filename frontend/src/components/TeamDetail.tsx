@@ -91,8 +91,10 @@ export default function TeamDetail({ id, onClose }: { id: number; onClose: () =>
             {rank && rank.world_rank > 0 && (
               <span className="badge" style={{
                 alignSelf: 'flex-start',
-                background: 'linear-gradient(135deg, #f0c040, #c48a0a)',
-                color: '#1a1d29', fontSize: 14, fontWeight: 700, padding: 'var(--space-2) var(--space-4)',
+                background: 'transparent',
+                color: '#f0c040',
+                border: '1px solid rgba(240, 192, 64, 0.4)',
+                fontSize: 14, fontWeight: 700, padding: 'var(--space-2) var(--space-4)',
               }}>
                 🏆 World #{rank.world_rank}
               </span>
@@ -144,8 +146,9 @@ export default function TeamDetail({ id, onClose }: { id: number; onClose: () =>
               {achievements.map((a, i) => (
                 <span key={i} className="badge" style={{
                   fontWeight: a.tier === 'major' ? 600 : 500, display: 'flex', alignItems: 'center', gap: 3,
-                  background: a.tier === 'major' ? 'linear-gradient(135deg, rgba(240,192,64,0.15), rgba(255,70,85,0.1))' : 'rgba(255,70,85,0.06)',
+                  background: 'transparent',
                   color: a.tier === 'major' ? '#f0c040' : 'var(--accent-red)',
+                  border: a.tier === 'major' ? '1px solid rgba(240, 192, 64, 0.4)' : '1px solid rgba(255, 70, 85, 0.2)',
                 }}>
                   {a.tier === 'major' ? '🏆 ' : ''}{a.label} <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, opacity: 0.8 }}>{a.count}×</span>
                 </span>
