@@ -51,7 +51,6 @@
       "Bash(curl *)",
       "Bash(timeout 5 bash -c 'echo \"test\" | nc -w 3 www.hltv.org 443 && echo \"connected\" || echo \"timeout/no-connect\"')",
       "Bash(timeout 5 bash -c 'curl -s -o /dev/null -w \"%{http_code} %{time_total}s\" --max-time 4 \"https://www.hltv.org/\"')",
-      "mcp__firecrawl__firecrawl_scrape",
       "Bash(go test *)",
       "Bash(git checkout *)",
       "Bash(go vet *)",
